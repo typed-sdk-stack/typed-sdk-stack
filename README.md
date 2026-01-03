@@ -46,7 +46,7 @@ Each package is versioned and published independently.
 | Package                                | Description                                         |
 | -------------------------------------- | --------------------------------------------------- |
 | `@typed-sdk-stack/core`                | Shared base SDK, HTTP client, and utilities         |
-| `@typed-sdk-stack/typescript-config`   | Reusable `tsconfig` presets for apps and packages   |
+| `@typed-sdk-stack/shared-config`       | Shared `tsconfig` + tsup presets for all packages   |
 | `@typed-sdk-stack/*`                   | Service-specific RapidAPI SDKs built on the core    |
 
 > See each package README for usage and examples.
@@ -55,7 +55,7 @@ Each package is versioned and published independently.
 
 ## 🛠️ Tooling
 
-* TypeScript + shared `tsconfig` presets (`@typed-sdk-stack/typescript-config`)
+* TypeScript + shared `tsconfig`/tsup presets (`@typed-sdk-stack/shared-config`)
 * Modern fetch-based HTTP
 * Runtime-agnostic (Node / Bun / Edge)
 * Monorepo tooling (workspaces)
@@ -64,7 +64,7 @@ Use the config package to bootstrap new workspaces:
 
 ```jsonc
 {
-  "extends": "@typed-sdk-stack/typescript-config/tsconfig.packages.json",
+  "extends": "@typed-sdk-stack/shared-config/tsconfig.packages.json",
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist"

@@ -1,6 +1,6 @@
-# @typed-sdk-stack/typescript-config
+# @typed-sdk-stack/shared-config
 
-Shared TypeScript compiler settings for the `typed-sdk-stack` monorepo. These presets keep strictness flags consistent across every workspace so each package can focus on source code instead of config drift.
+Shared TypeScript and tsup settings for the `typed-sdk-stack` monorepo. These presets keep compiler flags and build outputs consistent so each package can focus on feature code instead of tooling drift.
 
 ## Available Configs
 
@@ -22,7 +22,7 @@ Extend the preset that matches your workspace:
 
 ```jsonc
 {
-  "extends": "@typed-sdk-stack/typescript-config/tsconfig.packages.json",
+  "extends": "@typed-sdk-stack/shared-config/tsconfig.packages.json",
   "compilerOptions": {
     "rootDir": "src",
     "tsBuildInfoFile": "tsconfig.tsbuildinfo"
@@ -32,3 +32,18 @@ Extend the preset that matches your workspace:
 ```
 
 When a package introduces a dedicated build step, update its `package.json` entry points (`main`, `types`, `exports`) to reference the emitted `dist` artifacts instead of `src`. During development you can still reference `src` for faster iteration inside the monorepo.
+
+## Shared tsup Config
+
+Import the helper when defining a package-level `tsup.config.ts`:
+
+```ts
+import { createSharedTsupConfig } from '@typed-sdk-stack/shared-config/tsup.base';
+
+export default createSharedTsupConfig({
+  entry: ['src/index.ts'],
+  dts: true,
+});
+```
+
+The factory sets sensible defaults (ESM+CJS output, DTS, sourcemaps, treeshaking). Pass overrides for package-specific needs (e.g., enabling splitting or changing targets). Remember to re-point `package.json` `main/types` to `dist` once you publish.

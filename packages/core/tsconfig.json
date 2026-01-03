@@ -1,5 +1,5 @@
 {
-    "extends": "@typed-sdk-stack/typescript-config/tsconfig.packages.json",
+    "extends": "@typed-sdk-stack/shared-config/tsconfig.packages.json",
     "compilerOptions": {
         "rootDir": "src",
         "tsBuildInfoFile": "tsconfig.tsbuildinfo"

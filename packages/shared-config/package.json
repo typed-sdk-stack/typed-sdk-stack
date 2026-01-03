@@ -1,13 +1,16 @@
 {
-    "name": "@typed-sdk-stack/typescript-config",
+    "name": "@typed-sdk-stack/shared-config",
     "version": "0.0.0",
     "private": true,
     "license": "MIT",
-    "description": "Shared TypeScript configurations for the monorepo",
+    "description": "Shared TypeScript and tsup configurations for the monorepo",
+    "main": "tsup.base.ts",
+    "types": "tsup.base.ts",
     "files": [
         "README.md",
         "tsconfig.json",
-        "tsconfig.packages.json"
+        "tsconfig.packages.json",
+        "tsup.base.ts"
     ],
     "scripts": {
         "lint": "biome check .",
@@ -15,5 +18,8 @@
         "check-types": "echo \"No types to check\"",
         "test": "echo \"No tests to run\"",
         "validate": "echo \"Validated\""
+    },
+    "dependencies": {
+        "tsup": "^8.5.1"
     }
 }
