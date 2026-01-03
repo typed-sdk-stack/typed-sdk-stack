@@ -1,16 +1,10 @@
-import { defineConfig, type Options } from 'tsup';
+import { defineConfig } from 'tsup';
 
-type SharedOptions = Options;
-
-/**
- * Shared tsup config factory so every package emits consistent JS + DTS artifacts.
- * Packages can override any option by passing their own values in `overrides`.
- */
-export const createSharedTsupConfig = (overrides: SharedOptions = {}) => {
+const createSharedTsupConfig = (overrides = {}) => {
     const {
         entry = ['src/index.ts'],
         format = ['esm', 'cjs'],
-        dts = true,
+        dts = false,
         sourcemap = true,
         clean = true,
         target = 'es2022',
@@ -34,4 +28,5 @@ export const createSharedTsupConfig = (overrides: SharedOptions = {}) => {
     });
 };
 
+export { createSharedTsupConfig };
 export default createSharedTsupConfig;

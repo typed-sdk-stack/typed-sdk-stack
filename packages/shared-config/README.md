@@ -1,6 +1,6 @@
 # @typed-sdk-stack/shared-config
 
-Shared TypeScript and tsup settings for the `typed-sdk-stack` monorepo. These presets keep compiler flags and build outputs consistent so each package can focus on feature code instead of tooling drift.
+Shared TypeScript, build, and tooling settings for the `typed-sdk-stack` monorepo. These presets keep compiler flags and build outputs consistent so each package can focus on feature code instead of tooling drift.
 
 ## Available Configs
 
@@ -38,7 +38,7 @@ When a package introduces a dedicated build step, update its `package.json` entr
 Import the helper when defining a package-level `tsup.config.ts`:
 
 ```ts
-import { createSharedTsupConfig } from '@typed-sdk-stack/shared-config/tsup.base';
+import { createSharedTsupConfig } from '@typed-sdk-stack/shared-config/tsup/base';
 
 export default createSharedTsupConfig({
   entry: ['src/index.ts'],
@@ -46,4 +46,4 @@ export default createSharedTsupConfig({
 });
 ```
 
-The factory sets sensible defaults (ESM+CJS output, DTS, sourcemaps, treeshaking). Pass overrides for package-specific needs (e.g., enabling splitting or changing targets). Remember to re-point `package.json` `main/types` to `dist` once you publish.
+The factory lives under the `tsup/` directory so we can add future helpers (ESLint, Vitest, etc.) alongside the TypeScript configs. It sets sensible defaults (ESM+CJS output, DTS generation happens in a follow-up `tsc --emitDeclarationOnly` step) and accepts overrides for package-specific needs.

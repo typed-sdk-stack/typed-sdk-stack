@@ -3,15 +3,22 @@
     "version": "0.0.0",
     "private": true,
     "license": "MIT",
-    "description": "Shared TypeScript and tsup configurations for the monorepo",
-    "main": "tsup.base.ts",
-    "types": "tsup.base.ts",
+    "description": "Shared TypeScript, build, and tooling configurations for the monorepo",
+    "type": "module",
     "files": [
         "README.md",
         "tsconfig.json",
         "tsconfig.packages.json",
-        "tsup.base.ts"
+        "tsup"
     ],
+    "exports": {
+        "./tsconfig.json": "./tsconfig.json",
+        "./tsconfig.packages.json": "./tsconfig.packages.json",
+        "./tsup/base": {
+            "types": "./tsup/base.d.ts",
+            "default": "./tsup/base.mjs"
+        }
+    },
     "scripts": {
         "lint": "biome check .",
         "lint:fix": "biome check --write .",
