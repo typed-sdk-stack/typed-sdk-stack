@@ -10,6 +10,7 @@
         "lint": "turbo run lint",
         "lint:fix": "turbo run lint:fix",
         "validate": "turbo run validate",
+        "prepare": "lefthook install",
         "clean": "rimraf build dist node_modules .turbo tsconfig.tsbuildinfo apps/*/build apps/*/dist apps/*/node_modules apps/*/.turbo apps/*/tsconfig.tsbuildinfo packages/*/build packages/*/dist packages/*/node_modules packages/*/.turbo packages/*/tsconfig.tsbuildinfo"
     },
     "packageManager": "bun@1.3.0",

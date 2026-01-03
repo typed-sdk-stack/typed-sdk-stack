@@ -22,3 +22,6 @@ Commit messages must follow Conventional Commits because `@commitlint/config-con
 
 ## Security & Configuration Tips
 Store secrets such as `RAPIDAPI_KEY` in local env files and inject them through constructors or config layers—never embed them in code or docs. Scrub debug logging for hostnames or keys before landing a PR, and rotate the credential immediately if a log or gist leaks sensitive data.
+
+## Agent-Specific Instructions
+Never run git commands (e.g., `git status`, `git add`, `git commit`) unless the user explicitly requests them during the session.

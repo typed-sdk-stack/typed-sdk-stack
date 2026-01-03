@@ -1,0 +1,19 @@
+{
+    "name": "@typed-sdk-stack/typescript-config",
+    "version": "0.0.0",
+    "private": true,
+    "license": "MIT",
+    "description": "Shared TypeScript configurations for the monorepo",
+    "files": [
+        "README.md",
+        "tsconfig.json",
+        "tsconfig.packages.json"
+    ],
+    "scripts": {
+        "lint": "biome check .",
+        "lint:fix": "biome check --write .",
+        "check-types": "echo \"No types to check\"",
+        "test": "echo \"No tests to run\"",
+        "validate": "echo \"Validated\""
+    }
+}
