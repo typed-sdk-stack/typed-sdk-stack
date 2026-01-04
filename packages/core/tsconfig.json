@@ -1,8 +1,7 @@
 {
-    "extends": "@typed-sdk-stack/shared-config/tsconfig.packages.json",
+    "extends": "./tsconfig.build.json",
     "compilerOptions": {
-        "rootDir": ".",
-        "tsBuildInfoFile": "tsconfig.tsbuildinfo"
+        "rootDir": "."
     },
     "include": ["src/**/*.ts", "tests/**/*.ts"],
     "exclude": ["dist", "**/*.d.ts", "node_modules"]
