@@ -8,10 +8,6 @@
 - Implement retry policy (max attempts, backoff, retryable status/network errors) plus configuration hooks.
 - Add tests covering 4xx/5xx normalization, retries, and ensuring failures surface actionable metadata.
 
-## Auth & Key Management
-- Support per-request RapidAPI keys, multi-tenant key rotation, and BYOK scenarios in the client/base SDK.
-- Document the configuration surface (constructor arguments, environment fallback, security considerations).
-
 ## Client Enhancements for SDKs
 - As needs arise, extend `RapidApiClient` with helper methods (default params, request transforms, caching knobs) instead of creating a separate base class.
 
@@ -35,3 +31,10 @@
 ## Documentation & Tooling
 - Generate TypeDoc outputs and wire them into Docusaurus (or README sections) for public API docs.
 - Document all conventions in `packages/core/README.md`, including usage examples for each major feature.
+
+## testing file conventions
+In packages/core/tests/Schemas.ts lines 1-65: the test file name does not follow
+the repository test pattern and may be ignored by Bun's test runner; rename the
+file from packages/core/tests/Schemas.ts to packages/core/tests/Schemas.test.ts
+so it matches the **/*.test.ts convention and will be discovered and executed by
+the test runner.

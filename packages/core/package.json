@@ -19,7 +19,7 @@
         "src"
     ],
     "scripts": {
-        "build": "tsup --config tsup.config.ts && tsc --project tsconfig.json --emitDeclarationOnly --outDir dist",
+        "build": "tsup --config tsup.config.ts && tsc --project tsconfig.build.json --emitDeclarationOnly --outDir dist",
         "test": "bun test",
         "lint": "biome check .",
         "lint:fix": "biome check --write .",
@@ -28,6 +28,7 @@
     },
     "dependencies": {
         "axios": "^1.13.2",
+        "pino": "^10.1.0",
         "zod": "^4.3.4"
     },
     "devDependencies": {

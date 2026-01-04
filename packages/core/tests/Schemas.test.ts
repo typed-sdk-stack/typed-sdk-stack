@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import axios from 'axios';
 import { RapidApiClientParamsSchema, RequestParamsSchema } from '../src/schemas';
 
-describe('Schemas', () => {
+describe('RapidApiClientParamsSchema', () => {
     it('accepts valid params', () => {
         const result = RapidApiClientParamsSchema.safeParse({
             rapidApiKey: 'key',

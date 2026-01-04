@@ -57,6 +57,7 @@ Each package is versioned and published independently.
 
 * TypeScript + shared `tsconfig`/tsup presets (`@typed-sdk-stack/shared-config`)
 * Axios-based HTTP client (Bun/Node compatible)
+* Optional structured logging via Pino (pass a `pino.Logger` to `RapidApiClient`)
 * Runtime-agnostic (Node / Bun / Edge)
 * Monorepo tooling (workspaces)
 
