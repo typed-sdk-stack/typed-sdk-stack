@@ -27,12 +27,13 @@ export class RapidApiClient {
     }
 
     async request<Response = unknown>(requestParams: RequestParams): Promise<AxiosResponse<Response>> {
-        const { method, uri, params } = RequestParamsSchema.parse(requestParams);
+        const { method, uri, params, payload } = RequestParamsSchema.parse(requestParams);
 
         const config: AxiosRequestConfig = {
             method,
             url: uri,
             params,
+            data: payload,
         };
 
         try {

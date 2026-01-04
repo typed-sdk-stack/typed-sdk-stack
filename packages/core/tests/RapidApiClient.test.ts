@@ -39,11 +39,13 @@ describe('RapidApiClient', () => {
             method: 'post',
             uri: '/weather',
             params: { q: 'Boston' },
+            payload: { foo: 'bar' },
         });
 
         expect(response.status).toBe(200);
         expect(response.config.url).toBe('/weather');
         expect(response.config.params).toEqual({ q: 'Boston' });
+        expect(JSON.parse(response.config.data as string)).toEqual({ foo: 'bar' });
         expect(response.config.method).toBe('post');
         expect(response.config.baseURL).toBe(params.baseUrl);
     });
@@ -58,5 +60,20 @@ describe('RapidApiClient', () => {
         });
 
         expect(axiosInstance.defaults.baseURL).toBe(`https://${params.rapidApiHost}`);
+    });
+
+    it('omits payload on GET requests', async () => {
+        const { client, mock } = createClientWithMock();
+        mock.onGet('/simple').reply(200, { ok: true });
+
+        const response = await client.request({
+            method: 'get',
+            uri: '/simple',
+            params: { q: 'Rome' },
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.config.method).toBe('get');
+        expect(response.config.data).toBeUndefined();
     });
 });
