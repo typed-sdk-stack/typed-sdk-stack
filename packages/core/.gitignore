@@ -1,0 +1,17 @@
+# workspace-local installs
+node_modules
+
+# build output
+dist
+out
+*.tgz
+
+# ts incremental state
+*.tsbuildinfo
+
+# tests / coverage
+coverage
+*.lcov
+
+# misc
+.DS_Store
