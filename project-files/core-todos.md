@@ -8,10 +8,6 @@
 - Implement retry policy (max attempts, backoff, retryable status/network errors) plus configuration hooks.
 - Add tests covering 4xx/5xx normalization, retries, and ensuring failures surface actionable metadata.
 
-## Auth & Key Management
-- Support per-request RapidAPI keys, multi-tenant key rotation, and BYOK scenarios in the client/base SDK.
-- Document the configuration surface (constructor arguments, environment fallback, security considerations).
-
 ## Client Enhancements for SDKs
 - As needs arise, extend `RapidApiClient` with helper methods (default params, request transforms, caching knobs) instead of creating a separate base class.
 

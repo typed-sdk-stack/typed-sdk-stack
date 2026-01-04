@@ -6,7 +6,7 @@
 3. Any preferred metrics/logging format we should target (OpenTelemetry, custom events)?
 
 ## Implementation Notes
-- Design a typed hook registry (subscribe/unsubscribe) inside `RapidApiClient` with minimal overhead when unused.
-- Fire hooks for key lifecycle events (request start, success, failure, retry, cache hit/miss) and pass structured context (method, URL, duration, status, error).
+- Design a typed hook registry (subscribe/unsubscribe) inside `RapidApiClient` with minimal overhead when unused, e.g., `client.on('beforeRequest', handler)` returning an unsubscribe function.
+- Fire hooks for key lifecycle events (request start, success, failure, retry, cache hit/miss) and pass structured context (method, URL, duration, status, error, cache info).
 - Provide utility helpers for common logging/metric scenarios and document hook usage in README.
 - Add tests ensuring hooks fire in the correct order and do not block or throw uncaught errors.
