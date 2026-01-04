@@ -39,3 +39,5 @@ yarn-error.log*
 *.tsbuildinfo
 *.sqlite
 .env.test
+review-comments
+commit-message.md
