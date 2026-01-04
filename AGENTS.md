@@ -15,7 +15,7 @@ This Bun + Turborepo workspace keeps all runtime code in `packages/*`; currently
 Biome enforces 4-space indentation, 120-character lines, single quotes, and required semicolons; run `bun run lint` before committing. Stick to strict TypeScript, exporting explicit types and avoiding implicit `any`. Scope packages as `@typed-sdk-stack/<vendor>`; classes such as `NbaClient` use PascalCase, helpers stay camelCase, and config constants live under `src/config`.
 
 ## Testing Guidelines
-Put specs next to code (`src/foo.ts` → `__tests__/foo.spec.ts`) so Turbo’s caching stays effective. Use Bun’s test runner or a package-specific tool, but expose everything through the workspace `test` script so `bun run test` remains the single entry point. Mock RapidAPI calls through the core test utilities, store fixtures in `__fixtures__`, and focus coverage on request construction, error normalization, and caching toggles.
+Keep package tests inside a top-level `tests/` directory (e.g., `packages/core/tests`) so Bun’s runner can target a single location. Expose everything through the workspace `test` script so `bun run test` remains the single entry point. Mock RapidAPI calls through the core test utilities, store fixtures in `tests/__fixtures__`, and focus coverage on request construction, error normalization, and caching toggles.
 
 ## Commit & Pull Request Guidelines
 Commit messages must follow Conventional Commits because `@commitlint/config-conventional` and the `bunx commitlint` hook reject anything else. The Lefthook pre-commit runs `bun run lint` and `bun run check-types`; never bypass it. PRs should link an issue, describe affected packages, list validation commands, and include screenshots or sample payloads when HTTP behavior changes.

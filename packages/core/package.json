@@ -18,6 +18,7 @@
         "src"
     ],
     "scripts": {
+        "build": "tsup --config tsup.config.ts && tsc --project tsconfig.json --emitDeclarationOnly --outDir dist",
         "test": "bun test",
         "lint": "biome check .",
         "lint:fix": "biome check --write .",
