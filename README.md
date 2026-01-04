@@ -56,7 +56,7 @@ Each package is versioned and published independently.
 ## 🛠️ Tooling
 
 * TypeScript + shared `tsconfig`/tsup presets (`@typed-sdk-stack/shared-config`)
-* Modern fetch-based HTTP
+* Axios-based HTTP client (Bun/Node compatible)
 * Runtime-agnostic (Node / Bun / Edge)
 * Monorepo tooling (workspaces)
 
@@ -71,6 +71,8 @@ Use the config package to bootstrap new workspaces:
   }
 }
 ```
+
+All SDKs should favor Axios for HTTP requests. The core package will ship a shared Axios-based client so individual SDKs do not need to wire fetch manually.
 
 ---
 
