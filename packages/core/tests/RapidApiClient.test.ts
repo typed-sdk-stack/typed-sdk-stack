@@ -39,7 +39,7 @@ describe('RapidApiClient', () => {
         expect(axiosInstance.defaults.headers.common['X-RapidAPI-Host']).toBe(params.rapidApiHost);
     });
 
-    it('delegates request configuration to Axios', async () => {
+    it('builds a serializable response DTO', async () => {
         const { client, mock } = createClientWithMock();
         mock.onPost('/weather').reply(200, { ok: true });
 
@@ -51,11 +51,14 @@ describe('RapidApiClient', () => {
         });
 
         expect(response.status).toBe(200);
-        expect(response.config.url).toBe('/weather');
-        expect(response.config.params).toEqual({ q: 'Boston' });
-        expect(JSON.parse(response.config.data as string)).toEqual({ foo: 'bar' });
-        expect(response.config.method).toBe('post');
-        expect(response.config.baseURL).toBe(params.baseUrl);
+        expect(response.data).toEqual({ ok: true });
+        expect(response.request.uri).toBe('/weather');
+        expect(response.request.params).toEqual({ q: 'Boston' });
+        expect(response.request.payload).toEqual({ foo: 'bar' });
+        expect(response.request.method).toBe('post');
+        expect(response.request.baseURL).toBe(params.baseUrl);
+        expect(response.headers).toBeTruthy();
+        expect(typeof response.headers).toBe('object');
     });
 
     it('infers base URL from host when not provided', () => {
@@ -81,8 +84,8 @@ describe('RapidApiClient', () => {
         });
 
         expect(response.status).toBe(200);
-        expect(response.config.method).toBe('get');
-        expect(response.config.data).toBeUndefined();
+        expect(response.request.method).toBe('get');
+        expect(response.request.payload).toBeUndefined();
     });
 
     it('logs request lifecycle events', async () => {

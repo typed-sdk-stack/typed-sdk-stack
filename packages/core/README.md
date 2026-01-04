@@ -29,6 +29,7 @@ A first-class RapidAPI HTTP client that:
 * Supports per-request or per-client keys
 * Uses Axios under the hood so behavior is consistent across Node, Bun, and edge runtimes
 * Optional Pino-based logging (pass `pinoInstance` to surface request lifecycle logs)
+* Returns a serializable response DTO (status/data/headers/duration/request metadata) that SDKs can override by subclassing `buildResponseDto`
 * Normalizes RapidAPI request/response behavior
 
 All vendor SDKs build on this client.

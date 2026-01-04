@@ -1,8 +1,14 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
+import axios, { AxiosHeaders, type AxiosInstance, type AxiosRequestConfig } from 'axios';
 import { type Logger, pino } from 'pino';
 import { RapidApiClientError } from '../error/RapidApiClientError';
 import { RapidApiClientParamsSchema, RequestParamsSchema } from '../schemas';
-import type { RapidApiClientParams, RequestParams } from '../types';
+import type {
+    RapidApiClientParams,
+    RapidApiRequestMetadata,
+    RapidApiResponse,
+    RapidApiResponseBuilderInput,
+    RequestParams,
+} from '../types';
 
 export class RapidApiClient {
     protected httpClient: AxiosInstance;
@@ -38,43 +44,50 @@ export class RapidApiClient {
         return instance;
     }
 
-    async request<Response = unknown>(requestParams: RequestParams): Promise<AxiosResponse<Response>> {
-        const { method, uri, params, payload } = RequestParamsSchema.parse(requestParams);
+    async request<Response = unknown>(requestParams: RequestParams): Promise<RapidApiResponse<Response>> {
+        const parsedRequest = RequestParamsSchema.parse(requestParams);
+        const { method, uri, params, payload } = parsedRequest;
 
         const config: AxiosRequestConfig = {
             method,
             url: uri,
             params,
             data: payload,
+            baseURL: this.httpClient.defaults.baseURL,
         };
 
-        const logContext = {
-            method: config.method,
-            url: config.url,
-            params: config.params,
+        const requestMetadata: RapidApiRequestMetadata = {
+            ...parsedRequest,
+            baseURL: config.baseURL,
         };
 
-        this.logger.debug({ ...logContext }, 'rapidapi.request.start');
+        this.logger.debug({ ...requestMetadata }, 'rapidapi.request.start');
 
         const startedAt = Date.now();
 
         try {
             const response = await this.httpClient.request<Response>(config);
+            const durationMs = Date.now() - startedAt;
+            const dto = this.buildResponseDto<Response>({
+                response,
+                durationMs,
+                request: requestMetadata,
+            });
 
             this.logger.debug(
                 {
-                    ...logContext,
+                    ...requestMetadata,
                     status: response.status,
-                    durationMs: Date.now() - startedAt,
+                    durationMs,
                 },
                 'rapidapi.request.success'
             );
 
-            return response;
+            return dto;
         } catch (error) {
             this.logger.warn(
                 {
-                    ...logContext,
+                    ...requestMetadata,
                     durationMs: Date.now() - startedAt,
                     error: error instanceof Error ? error.message : String(error),
                 },
@@ -83,6 +96,25 @@ export class RapidApiClient {
 
             throw this.normalizeError(error, config);
         }
+    }
+
+    protected buildResponseDto<Response>({
+        response,
+        durationMs,
+        request,
+    }: RapidApiResponseBuilderInput<Response>): RapidApiResponse<Response> {
+        const headers =
+            response.headers instanceof AxiosHeaders
+                ? response.headers.toJSON()
+                : (response.headers as Record<string, unknown>);
+
+        return {
+            status: response.status,
+            data: response.data,
+            headers,
+            durationMs,
+            request,
+        };
     }
 
     protected normalizeError(error: unknown, config: AxiosRequestConfig): RapidApiClientError {
