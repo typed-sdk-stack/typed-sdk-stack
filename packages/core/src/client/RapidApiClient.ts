@@ -1,5 +1,6 @@
 import Keyv from '@keyvhq/core';
 import axios, { AxiosHeaders, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import objectHash from 'object-hash';
 import { type Logger, pino } from 'pino';
 import { CacheManager } from '../cache/CacheManager';
 import { RapidApiClientError } from '../error/RapidApiClientError';
@@ -43,7 +44,7 @@ export class RapidApiClient {
         const store =
             keyvInstance ??
             new Keyv({
-                namespace: `${rapidApiHost}:${rapidApiKey}`,
+                namespace: `${rapidApiHost}:${objectHash(rapidApiKey)}`,
                 ttl: 0,
             });
 
