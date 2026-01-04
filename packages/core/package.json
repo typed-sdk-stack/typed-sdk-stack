@@ -27,12 +27,15 @@
         "validate": "echo \"Validated\""
     },
     "dependencies": {
+        "@keyvhq/core": "^2.1.11",
         "axios": "^1.13.2",
+        "object-hash": "^3.0.0",
         "pino": "^10.1.0",
         "zod": "^4.3.4"
     },
     "devDependencies": {
         "@typed-sdk-stack/shared-config": "*",
+        "@types/object-hash": "^3.0.6",
         "axios-mock-adapter": "^2.1.0"
     },
     "peerDependencies": {

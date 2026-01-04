@@ -1,7 +1,15 @@
+import type Keyv from '@keyvhq/core';
 import type { AxiosInstance } from 'axios';
 import type { Logger } from 'pino';
 import { z } from 'zod';
-import { isAxiosInstance, isPinoLogger } from './utils';
+import type { CacheManager } from './cache/CacheManager';
+import { isAxiosInstance, isKeyvCache, isPinoLogger } from './utils';
+
+const isCacheManagerInstance = (value: unknown): value is CacheManager =>
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as CacheManager).createCacheKey === 'function' &&
+    'cache' in (value as CacheManager);
 
 export const RapidApiClientParamsSchema = z.object({
     rapidApiKey: z.string().min(1, 'RapidAPI key is required.'),
@@ -17,6 +25,16 @@ export const RapidApiClientParamsSchema = z.object({
             message: 'A valid Pino Logger instance is required.',
         })
         .optional(),
+    keyvInstance: z
+        .custom<Keyv>(isKeyvCache, {
+            message: 'A valid Keyv instance is required.',
+        })
+        .optional(),
+    cacheManager: z
+        .custom<CacheManager>(isCacheManagerInstance, {
+            message: 'A valid CacheManager instance is required.',
+        })
+        .optional(),
 });
 
 export const RequestParamsSchema = z.object({
@@ -24,4 +42,15 @@ export const RequestParamsSchema = z.object({
     uri: z.string().min(1, 'Request URI is required.'),
     params: z.record(z.string(), z.unknown()).optional(),
     payload: z.unknown().optional(),
+    cache: z.boolean().optional(),
+    cacheKey: z.string().min(1).optional(),
+    ttl: z.number().positive().optional(),
+});
+
+export const CacheManagerParamsSchema = z.object({
+    keyvInstance: z
+        .custom<Keyv>(isKeyvCache, {
+            message: 'A valid Keyv instance is required.',
+        })
+        .optional(),
 });

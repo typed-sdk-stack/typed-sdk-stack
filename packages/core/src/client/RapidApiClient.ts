@@ -1,5 +1,7 @@
+import Keyv from '@keyvhq/core';
 import axios, { AxiosHeaders, type AxiosInstance, type AxiosRequestConfig } from 'axios';
 import { type Logger, pino } from 'pino';
+import { CacheManager } from '../cache/CacheManager';
 import { RapidApiClientError } from '../error/RapidApiClientError';
 import { RapidApiClientParamsSchema, RequestParamsSchema } from '../schemas';
 import type {
@@ -13,11 +15,39 @@ import type {
 export class RapidApiClient {
     protected httpClient: AxiosInstance;
     protected logger: Logger;
+    protected cacheManager: CacheManager;
+    protected rapidApiHost: string;
+    protected rapidApiKey: string;
 
     constructor(params: RapidApiClientParams) {
         const httpClientParams = RapidApiClientParamsSchema.parse(params);
         this.httpClient = this.createHttpClient(httpClientParams);
         this.logger = this.createPinoLogger(httpClientParams);
+        this.cacheManager = this.createCacheManager(httpClientParams);
+
+        const { rapidApiHost, rapidApiKey } = httpClientParams;
+        this.rapidApiHost = rapidApiHost;
+        this.rapidApiKey = rapidApiKey;
+    }
+
+    protected createCacheManager({
+        cacheManager,
+        keyvInstance,
+        rapidApiHost,
+        rapidApiKey,
+    }: RapidApiClientParams): CacheManager {
+        if (cacheManager) {
+            return cacheManager;
+        }
+
+        const store =
+            keyvInstance ??
+            new Keyv({
+                namespace: `${rapidApiHost}:${rapidApiKey}`,
+                ttl: 0,
+            });
+
+        return new CacheManager({ keyvInstance: store });
     }
 
     protected createPinoLogger({ pinoInstance }: RapidApiClientParams): Logger {
@@ -63,6 +93,26 @@ export class RapidApiClient {
 
         this.logger.debug({ ...requestMetadata }, 'rapidapi.request.start');
 
+        const shouldCacheRequest = this.shouldCache(parsedRequest);
+        const cacheKey =
+            parsedRequest.cacheKey ??
+            this.cacheManager.createCacheKey(config, {
+                rapidApiHost: this.rapidApiHost,
+                rapidApiKey: this.rapidApiKey,
+            });
+
+        if (cacheKey && shouldCacheRequest) {
+            const cachedResponse = await this.cacheManager.get<RapidApiResponse<Response>>(cacheKey);
+            if (cachedResponse) {
+                this.logger.debug({ ...requestMetadata, cacheKey }, 'rapidapi.cache.hit');
+                return { ...cachedResponse, fromCache: true };
+            }
+
+            this.logger.debug({ ...requestMetadata, cacheKey }, 'rapidapi.cache.miss');
+        } else {
+            this.logger.debug({ ...requestMetadata }, 'rapidapi.cache.skip');
+        }
+
         const startedAt = Date.now();
 
         try {
@@ -72,6 +122,7 @@ export class RapidApiClient {
                 response,
                 durationMs,
                 request: requestMetadata,
+                fromCache: false,
             });
 
             this.logger.debug(
@@ -82,6 +133,19 @@ export class RapidApiClient {
                 },
                 'rapidapi.request.success'
             );
+
+            if (cacheKey && shouldCacheRequest) {
+                await this.cacheManager.set(cacheKey, dto, parsedRequest.ttl);
+
+                this.logger.debug(
+                    {
+                        ...requestMetadata,
+                        cacheKey,
+                        ttl: parsedRequest.ttl,
+                    },
+                    'rapidapi.cache.store'
+                );
+            }
 
             return dto;
         } catch (error) {
@@ -102,6 +166,7 @@ export class RapidApiClient {
         response,
         durationMs,
         request,
+        fromCache,
     }: RapidApiResponseBuilderInput<Response>): RapidApiResponse<Response> {
         const headers =
             response.headers instanceof AxiosHeaders
@@ -114,7 +179,20 @@ export class RapidApiClient {
             headers,
             durationMs,
             request,
+            fromCache: fromCache ?? false,
         };
+    }
+
+    protected shouldCache(request: RequestParams): boolean {
+        if (typeof request.cache === 'boolean') {
+            return request.cache;
+        }
+
+        if (typeof request.cacheKey === 'string') {
+            return true;
+        }
+
+        return request.method === 'get';
     }
 
     protected normalizeError(error: unknown, config: AxiosRequestConfig): RapidApiClientError {

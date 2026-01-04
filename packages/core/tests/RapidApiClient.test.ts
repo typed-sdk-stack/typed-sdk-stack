@@ -117,4 +117,105 @@ describe('RapidApiClient', () => {
 
         expect(warnSpy.mock.calls.length).toBe(1);
     });
+
+    it('returns cached responses for repeated GET requests', async () => {
+        const { client, mock } = createClientWithMock();
+        mock.onGet('/cache-me').reply(200, { ok: true });
+
+        const firstResponse = await client.request({
+            method: 'get',
+            uri: '/cache-me',
+        });
+
+        expect(firstResponse.fromCache).toBe(false);
+
+        mock.resetHandlers();
+        mock.onGet('/cache-me').reply(() => [500, {}]);
+
+        const cachedResponse = await client.request({
+            method: 'get',
+            uri: '/cache-me',
+        });
+
+        expect(cachedResponse.fromCache).toBe(true);
+        expect(cachedResponse.data).toEqual(firstResponse.data);
+    });
+
+    it('allows custom cacheKey overrides for non-GET requests', async () => {
+        const { client, mock } = createClientWithMock();
+        mock.onPost('/cache-post').reply(200, { ok: true });
+
+        const firstResponse = await client.request({
+            method: 'post',
+            uri: '/cache-post',
+            payload: { foo: 'bar' },
+            cacheKey: 'custom-cache-key',
+            ttl: 1000,
+        });
+
+        expect(firstResponse.fromCache).toBe(false);
+
+        mock.resetHandlers();
+        mock.onPost('/cache-post').reply(() => [500, {}]);
+
+        const cachedResponse = await client.request({
+            method: 'post',
+            uri: '/cache-post',
+            payload: { foo: 'bar' },
+            cacheKey: 'custom-cache-key',
+        });
+
+        expect(cachedResponse.fromCache).toBe(true);
+        expect(cachedResponse.data).toEqual(firstResponse.data);
+    });
+
+    it('skips caching when cache is explicitly false', async () => {
+        const { client, mock } = createClientWithMock();
+        mock.onGet('/no-cache').reply(200, { ok: true });
+
+        const response = await client.request({
+            method: 'get',
+            uri: '/no-cache',
+            cache: false,
+        });
+
+        expect(response.fromCache).toBe(false);
+
+        mock.resetHandlers();
+        mock.onGet('/no-cache').reply(() => [500, {}]);
+
+        await expect(
+            client.request({
+                method: 'get',
+                uri: '/no-cache',
+                cache: false,
+            })
+        ).rejects.toThrow();
+    });
+
+    it('enables caching for non-GET requests when cache is true without a custom key', async () => {
+        const { client, mock } = createClientWithMock();
+        mock.onPost('/force-cache').reply(200, { ok: true });
+
+        const response = await client.request({
+            method: 'post',
+            uri: '/force-cache',
+            payload: { foo: 'bar' },
+            cache: true,
+        });
+
+        expect(response.fromCache).toBe(false);
+
+        mock.resetHandlers();
+        mock.onPost('/force-cache').reply(() => [500, {}]);
+
+        const cachedResponse = await client.request({
+            method: 'post',
+            uri: '/force-cache',
+            payload: { foo: 'bar' },
+            cache: true,
+        });
+
+        expect(cachedResponse.fromCache).toBe(true);
+    });
 });
