@@ -6,11 +6,12 @@ const isAxiosInstance = (value: unknown): value is AxiosInstance => {
         return false;
     }
 
-    if (typeof value !== 'function') {
+    const valueType = typeof value;
+    if (valueType !== 'function' && valueType !== 'object') {
         return false;
     }
 
-    return 'request' in value && typeof (value as AxiosInstance).request === 'function';
+    return typeof (value as AxiosInstance).request === 'function';
 };
 
 export const RapidApiClientParamsSchema = z.object({

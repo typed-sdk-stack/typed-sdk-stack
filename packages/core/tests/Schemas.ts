@@ -32,6 +32,16 @@ describe('Schemas', () => {
 
         expect(result.success).toBe(false);
     });
+
+    it('accepts axios instances created via axios.create()', () => {
+        const result = RapidApiClientParamsSchema.safeParse({
+            rapidApiKey: 'key',
+            rapidApiHost: 'host',
+            axiosInstance: axios.create(),
+        });
+
+        expect(result.success).toBe(true);
+    });
 });
 
 describe('RequestParamsSchema', () => {
