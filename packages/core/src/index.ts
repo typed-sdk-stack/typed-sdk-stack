@@ -1,2 +1,2 @@
-export * from './RapidApiClient';
-export * from './RapidApiClientError';
+export * from './client/RapidApiClient';
+export * from './error/RapidApiClientError';

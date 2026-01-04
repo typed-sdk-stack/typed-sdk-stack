@@ -12,7 +12,7 @@ This Bun + Turborepo workspace keeps all runtime code in `packages/*`; currently
 - `bun run validate` – convenience target that chains lint, type, and test for a CI-like gate.
 
 ## Coding Style & Naming Conventions
-Biome enforces 4-space indentation, 120-character lines, single quotes, and required semicolons; run `bun run lint` before committing. Stick to strict TypeScript, exporting explicit types and avoiding implicit `any`. Scope packages as `@typed-sdk-stack/<vendor>`; classes such as `NbaClient` use PascalCase, helpers stay camelCase, and config constants live under `src/config`.
+Biome enforces 4-space indentation, 120-character lines, single quotes, and required semicolons; run `bun run lint` before committing. Stick to strict TypeScript, exporting explicit types and avoiding implicit `any`. Scope packages as `@typed-sdk-stack/<vendor>`; classes such as `NbaClient` use PascalCase, helpers stay camelCase, and config constants live under `src/config`. Use Axios for HTTP clients—do not mix in raw fetch unless explicitly approved.
 
 ## Testing Guidelines
 Keep package tests inside a top-level `tests/` directory (e.g., `packages/core/tests`) so Bun’s runner can target a single location. Expose everything through the workspace `test` script so `bun run test` remains the single entry point. Mock RapidAPI calls through the core test utilities, store fixtures in `tests/__fixtures__`, and focus coverage on request construction, error normalization, and caching toggles.

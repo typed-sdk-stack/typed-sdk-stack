@@ -27,7 +27,7 @@ A first-class RapidAPI HTTP client that:
 
 * Automatically injects `x-rapidapi-key` and `x-rapidapi-host`
 * Supports per-request or per-client keys
-* Works in Node, Bun, and edge runtimes
+* Uses Axios under the hood so behavior is consistent across Node, Bun, and edge runtimes
 * Normalizes RapidAPI request/response behavior
 
 All vendor SDKs build on this client.
