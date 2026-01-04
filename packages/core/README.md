@@ -173,6 +173,9 @@ SDK-focused test helpers:
 
 Designed for fast, reliable SDK testing.
 
+Live integration tests are available in `tests/Integration.test.ts`. They are skipped by default; run
+`RUN_RAPID_API_TESTS=true RAPID_API_KEY=... bun test tests/Integration.test.ts` (optionally override host/params via env) to hit a real RapidAPI endpoint without affecting the regular `bun run test` suite.
+
 ---
 
 ### 12. Clear Scope Boundaries

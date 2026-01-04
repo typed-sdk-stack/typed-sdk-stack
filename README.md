@@ -77,6 +77,8 @@ Use the config package to bootstrap new workspaces:
 
 All SDKs should favor Axios for HTTP requests. The core package will ship a shared Axios-based client so individual SDKs do not need to wire fetch manually.
 
+Integration tests that hit live RapidAPI endpoints run only when you explicitly target them (e.g., `RUN_RAPID_API_TESTS=true RAPID_API_KEY=... bun test tests/Integration.test.ts`), so day-to-day `bun run test` remains network-free.
+
 `RapidApiClient.request` accepts optional `cache`, `cacheKey`, and `ttl` parameters for per-call caching control (e.g., set `cache: false` to skip, `cache: true` to force caching, or pass a custom key), and every response includes a `fromCache` flag so SDKs can tell whether the data was served from Keyv.
 
 ---
