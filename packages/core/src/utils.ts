@@ -14,5 +14,18 @@ export const isAxiosInstance = (value: unknown): value is AxiosInstance => {
     return typeof (value as AxiosInstance).request === 'function';
 };
 
-export const isPinoLogger = (value: unknown): value is Logger =>
-    value !== null && typeof value === 'object' && typeof (value as Logger).child === 'function';
+export const isPinoLogger = (value: unknown): value is Logger => {
+    if (!value || typeof value !== 'object') {
+        return false;
+    }
+
+    const candidate = value as Logger;
+
+    return (
+        typeof candidate.child === 'function' &&
+        typeof candidate.debug === 'function' &&
+        typeof candidate.info === 'function' &&
+        typeof candidate.warn === 'function' &&
+        typeof candidate.error === 'function'
+    );
+};
