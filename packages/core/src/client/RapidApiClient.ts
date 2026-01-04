@@ -1,14 +1,26 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
+import { type Logger, pino } from 'pino';
 import { RapidApiClientError } from '../error/RapidApiClientError';
 import { RapidApiClientParamsSchema, RequestParamsSchema } from '../schemas';
 import type { RapidApiClientParams, RequestParams } from '../types';
 
 export class RapidApiClient {
     protected httpClient: AxiosInstance;
+    protected logger: Logger;
 
     constructor(params: RapidApiClientParams) {
         const httpClientParams = RapidApiClientParamsSchema.parse(params);
         this.httpClient = this.createHttpClient(httpClientParams);
+        this.logger = this.createPinoLogger(httpClientParams);
+    }
+
+    protected createPinoLogger({ pinoInstance }: RapidApiClientParams): Logger {
+        return (
+            pinoInstance ??
+            pino({
+                level: 'silent',
+            })
+        );
     }
 
     protected createHttpClient({
@@ -36,9 +48,39 @@ export class RapidApiClient {
             data: payload,
         };
 
+        const logContext = {
+            method: config.method,
+            url: config.url,
+            params: config.params,
+        };
+
+        this.logger.debug({ ...logContext }, 'rapidapi.request.start');
+
+        const startedAt = Date.now();
+
         try {
-            return await this.httpClient.request<Response>(config);
+            const response = await this.httpClient.request<Response>(config);
+
+            this.logger.debug(
+                {
+                    ...logContext,
+                    status: response.status,
+                    durationMs: Date.now() - startedAt,
+                },
+                'rapidapi.request.success'
+            );
+
+            return response;
         } catch (error) {
+            this.logger.warn(
+                {
+                    ...logContext,
+                    durationMs: Date.now() - startedAt,
+                    error: error instanceof Error ? error.message : String(error),
+                },
+                'rapidapi.request.failure'
+            );
+
             throw this.normalizeError(error, config);
         }
     }

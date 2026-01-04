@@ -6,11 +6,11 @@
 2. **Logging approach:** Log directly inside `RapidApiClient` (e.g., `logger.debug({...}, 'sending request')`), deferring hook-based logging for later.
 3. **Log levels:** Managed by the provided pino instance; expose the logger so users can adjust levels at runtime.
 4. **Sensitive data:** Never log `rapidApiKey`; mask or omit any secret fields by default.
+5. **Default logger:** If no logger is provided, create a Pino instance set to `silent`.
 
 ## Additional Notes
 
 1. **Structured payloads:** Log payloads/params in full (no truncation), unless users sanitize them before logging.
-2. **Default logger behavior:** When no logger is supplied, instantiate pino with level `silent` to avoid noisy output while preserving a consistent interface.
 
 ## Implementation Notes
 

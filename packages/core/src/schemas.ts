@@ -1,18 +1,7 @@
 import type { AxiosInstance } from 'axios';
+import type { Logger } from 'pino';
 import { z } from 'zod';
-
-const isAxiosInstance = (value: unknown): value is AxiosInstance => {
-    if (!value) {
-        return false;
-    }
-
-    const valueType = typeof value;
-    if (valueType !== 'function' && valueType !== 'object') {
-        return false;
-    }
-
-    return typeof (value as AxiosInstance).request === 'function';
-};
+import { isAxiosInstance, isPinoLogger } from './utils';
 
 export const RapidApiClientParamsSchema = z.object({
     rapidApiKey: z.string().min(1, 'RapidAPI key is required.'),
@@ -21,6 +10,11 @@ export const RapidApiClientParamsSchema = z.object({
     axiosInstance: z
         .custom<AxiosInstance>(isAxiosInstance, {
             message: 'A valid Axios instance is required.',
+        })
+        .optional(),
+    pinoInstance: z
+        .custom<Logger>(isPinoLogger, {
+            message: 'A valid Pino Logger instance is required.',
         })
         .optional(),
 });
