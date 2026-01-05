@@ -82,6 +82,35 @@ Caching request options:
 
 Caching is opt-in and transparent.
 
+#### Example: Bring-your-own cache + TTL overrides
+
+```ts
+import Keyv from '@keyvhq/redis';
+import { RapidApiClient } from '@typed-sdk-stack/core';
+
+const redisCache = new Keyv('redis://localhost:6379', {
+    namespace: 'weather-prod',
+    ttl: 60_000, // default TTL for any entry without a per-request override
+});
+
+const client = new RapidApiClient({
+    rapidApiKey: process.env.RAPID_API_KEY!,
+    rapidApiHost: 'weatherapi-com.p.rapidapi.com',
+    keyvInstance: redisCache,
+});
+
+await client.request({
+    method: 'get',
+    uri: '/current.json',
+    params: { q: '53.1,-0.13' },
+    cache: true,
+    ttl: 5_000, // overrides the store default just for this call
+});
+```
+
+Per-request `ttl` always wins; when it is omitted the underlying Keyv instance controls expiry (e.g., Redis TTL). Custom
+stores can be anything Keyv supports (Redis, SQLite, in-memory) so SDKs can reuse existing infrastructure.
+
 ---
 
 ### 5. Rate Limit Awareness
@@ -160,6 +189,32 @@ Hook points for:
 * Error rates
 
 Hooks are framework-agnostic and optional.
+
+#### Example: Structured logging with Pino
+
+```ts
+import pino from 'pino';
+import { RapidApiClient } from '@typed-sdk-stack/core';
+
+const logger = pino({ level: 'debug' });
+
+const client = new RapidApiClient({
+    rapidApiKey: process.env.RAPID_API_KEY!,
+    rapidApiHost: 'weatherapi-com.p.rapidapi.com',
+    pinoInstance: logger,
+});
+
+await client.request({
+    method: 'get',
+    uri: '/current.json',
+    params: { q: '53.1,-0.13' },
+});
+```
+
+The client emits structured events (`rapidapi.request.start`, `rapidapi.request.success`, `rapidapi.request.failure`,
+`rapidapi.cache.hit`, `rapidapi.cache.miss`, `rapidapi.cache.store`) with metadata such as method, uri, params, duration,
+and cache keys. Secrets (e.g., `rapidApiKey`) are automatically redacted, so adjusting log verbosity is as simple as
+changing the provided Pino instance’s level.
 
 ---
 
