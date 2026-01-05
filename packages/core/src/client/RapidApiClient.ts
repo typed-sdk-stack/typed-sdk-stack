@@ -125,9 +125,11 @@ export class RapidApiClient {
             return Number.isFinite(parsed) ? parsed : 0;
         };
 
+        const timestamp = dateObj.getTime();
+
         return {
             id: String(pickValue('x-rapidapi-request-id') ?? ''),
-            date: dateObj.getTime(),
+            date: Number.isFinite(timestamp) ? timestamp : Date.now(),
             remaining: toNumber('x-ratelimit-requests-remaining', 'x-rapidapi-request-remaining'),
             reset: toNumber('x-ratelimit-requests-reset', 'x-rapidapi-request-reset'),
             limit: toNumber('x-ratelimit-requests-limit', 'x-rapidapi-request-limit'),
