@@ -29,6 +29,8 @@ A first-class RapidAPI HTTP client that:
 * Supports per-request or per-client keys
 * Uses Axios under the hood so behavior is consistent across Node, Bun, and edge runtimes
 * Optional Pino-based logging (pass `pinoInstance` to surface request lifecycle logs)
+* Returns a serializable response DTO (status/data/headers/duration/request metadata + `fromCache`) that SDKs can override by subclassing `buildResponseDto`
+* Ships with a `CacheManager` helper so SDKs can inject custom Keyv stores or reuse the default namespaced cache
 * Normalizes RapidAPI request/response behavior
 
 All vendor SDKs build on this client.
@@ -67,8 +69,16 @@ Explicit caching utilities designed for RapidAPI usage:
 
 * In-memory cache
 * Redis-compatible adapters
-* TTL configuration per endpoint
-* Deterministic cache key helpers
+* TTL configuration per endpoint (per-request via `ttl`)
+* Deterministic cache key helpers (`CacheManager.createCacheKey()` combines method/url/params/payload/metadata)
+* Extensible `CacheManager` that can be constructed with your own `Keyv` instance (Redis, SQLite, etc.) or reused from `RapidApiClient`
+* Opt-in request-level caching controls (`cacheKey` override + `ttl`) and default GET caching with cache-hit/miss logging; responses include `fromCache`
+
+Caching request options:
+
+* `cache` — boolean to force caching (`true`) or skip caching entirely (`false`) regardless of HTTP method.
+* `cacheKey` — override the derived key so non-GET calls can be cached deterministically; also enables caching when provided.
+* `ttl` — provide a per-request TTL (milliseconds) passed to Keyv; falls back to the store default.
 
 Caching is opt-in and transparent.
 
@@ -162,6 +172,9 @@ SDK-focused test helpers:
 * Cache isolation
 
 Designed for fast, reliable SDK testing.
+
+Live integration tests are available in `tests/Integration.test.ts`. They are skipped by default; run
+`RUN_RAPID_API_TESTS=true RAPID_API_KEY=... bun test tests/Integration.test.ts` (optionally override host/params via env) to hit a real RapidAPI endpoint without affecting the regular `bun run test` suite.
 
 ---
 

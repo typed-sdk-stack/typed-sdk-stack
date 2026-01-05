@@ -1,3 +1,4 @@
+import type Keyv from '@keyvhq/core';
 import type { AxiosInstance } from 'axios';
 import type { Logger } from 'pino';
 
@@ -27,5 +28,20 @@ export const isPinoLogger = (value: unknown): value is Logger => {
         typeof candidate.info === 'function' &&
         typeof candidate.warn === 'function' &&
         typeof candidate.error === 'function'
+    );
+};
+
+export const isKeyvCache = (value: unknown): value is Keyv => {
+    if (!value || typeof value !== 'object') {
+        return false;
+    }
+
+    const candidate = value as Keyv;
+
+    return (
+        typeof candidate.set === 'function' &&
+        typeof candidate.get === 'function' &&
+        typeof candidate.delete === 'function' &&
+        typeof candidate.clear === 'function'
     );
 };

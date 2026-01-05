@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import axios from 'axios';
+import { CacheManager } from '../src';
 import { RapidApiClientParamsSchema, RequestParamsSchema } from '../src/schemas';
 
 describe('RapidApiClientParamsSchema', () => {
@@ -38,6 +39,17 @@ describe('RapidApiClientParamsSchema', () => {
             rapidApiKey: 'key',
             rapidApiHost: 'host',
             axiosInstance: axios.create(),
+        });
+
+        expect(result.success).toBe(true);
+    });
+
+    it('accepts a custom CacheManager instance', () => {
+        const cacheManager = new CacheManager({});
+        const result = RapidApiClientParamsSchema.safeParse({
+            rapidApiKey: 'key',
+            rapidApiHost: 'host',
+            cacheManager,
         });
 
         expect(result.success).toBe(true);
