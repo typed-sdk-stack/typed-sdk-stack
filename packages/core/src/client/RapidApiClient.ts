@@ -4,7 +4,7 @@ import objectHash from 'object-hash';
 import { type Logger, pino } from 'pino';
 import { CacheManager } from '../cache/CacheManager';
 import { RapidApiClientError } from '../error/RapidApiClientError';
-import { CacheMetrics as CacheMetricKeys } from '../metrics/interfaces/CacheMetricsTrackerInterface';
+import { CacheMetricKeys } from '../metrics/interfaces/CacheMetricsTrackerInterface';
 import type { MetricsTracker } from '../metrics/interfaces/MetricsTrackerInterface';
 import { InMemoryMetricsTracker } from '../metrics/stores/InMemoryMetricsTracker';
 import { RapidApiClientParamsSchema, RequestParamsSchema } from '../schemas';

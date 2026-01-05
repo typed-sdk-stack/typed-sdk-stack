@@ -1,9 +1,9 @@
 import type { MetricName } from '../interfaces/BaseMetricsTrackerInterface';
-import { CacheMetrics } from '../interfaces/CacheMetricsTrackerInterface';
+import { CacheMetricKeys } from '../interfaces/CacheMetricsTrackerInterface';
 import type { MetricsTracker } from '../interfaces/MetricsTrackerInterface';
-import { RequestsMetrics } from '../interfaces/RequestsMetricsTrackerInterface';
+import { RequestMetricKeys } from '../interfaces/RequestsMetricsTrackerInterface';
 
-type Metric = MetricName<typeof CacheMetrics> | MetricName<typeof RequestsMetrics>;
+type Metric = MetricName<typeof CacheMetricKeys> | MetricName<typeof RequestMetricKeys>;
 type Snapshot = Record<Metric, number>;
 
 export class InMemoryMetricsTracker implements MetricsTracker {
@@ -23,32 +23,32 @@ export class InMemoryMetricsTracker implements MetricsTracker {
 
     async snapshot(): Promise<Snapshot> {
         const snapshot: Snapshot = {} as Snapshot;
-        for (const key of Object.values(CacheMetrics) as Metric[]) {
+        for (const key of Object.values(CacheMetricKeys) as Metric[]) {
             snapshot[key] = this.counters.get(key) ?? 0;
         }
-        for (const key of Object.values(RequestsMetrics) as Metric[]) {
+        for (const key of Object.values(RequestMetricKeys) as Metric[]) {
             snapshot[key] = this.counters.get(key) ?? 0;
         }
         return snapshot;
     }
 
     recordCacheHit(): void {
-        this.increment(CacheMetrics.cacheHit as Metric);
+        this.increment(CacheMetricKeys.cacheHit as Metric);
     }
 
     recordCacheMiss(): void {
-        this.increment(CacheMetrics.cacheMiss as Metric);
+        this.increment(CacheMetricKeys.cacheMiss as Metric);
     }
 
     recordRequestsTotal(): void {
-        this.increment(RequestsMetrics.requestsTotal as Metric);
+        this.increment(RequestMetricKeys.requestsTotal as Metric);
     }
 
     recordRequestsSucceed(): void {
-        this.increment(RequestsMetrics.requestsSucceed as Metric);
+        this.increment(RequestMetricKeys.requestsSucceed as Metric);
     }
 
     recordRequestsFailed(): void {
-        this.increment(RequestsMetrics.requestsFailed as Metric);
+        this.increment(RequestMetricKeys.requestsFailed as Metric);
     }
 }

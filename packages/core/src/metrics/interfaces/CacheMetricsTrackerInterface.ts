@@ -1,4 +1,4 @@
-export const CacheMetrics = {
+export const CacheMetricKeys = {
     cacheHit: 'cache_hit',
     cacheMiss: 'cache_miss',
 } as const;

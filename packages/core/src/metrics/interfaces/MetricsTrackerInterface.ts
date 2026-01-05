@@ -1,10 +1,10 @@
 import type { BaseMetricsTracker } from './BaseMetricsTrackerInterface';
-import { CacheMetrics, type CacheMetricsTracker } from './CacheMetricsTrackerInterface';
-import { RequestsMetrics, type RequestsMetricsTracker } from './RequestsMetricsTrackerInterface';
+import { CacheMetricKeys, type CacheMetricsTracker } from './CacheMetricsTrackerInterface';
+import { RequestMetricKeys, type RequestsMetricsTracker } from './RequestsMetricsTrackerInterface';
 
 export const AllMetrics = {
-    ...CacheMetrics,
-    ...RequestsMetrics,
+    ...CacheMetricKeys,
+    ...RequestMetricKeys,
 } as const;
 
 export interface MetricsTracker
