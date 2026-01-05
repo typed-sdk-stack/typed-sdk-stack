@@ -318,3 +318,16 @@ describe('rate limits', () => {
         expect(result.limit).toBe(500);
     });
 });
+
+describe('metrics snapshot', () => {
+    it('exposes the underlying metrics snapshot', async () => {
+        const { client, mock } = createClientWithMock();
+        mock.onGet('/metrics').reply(200, { ok: true });
+
+        await client.request({ method: 'get', uri: '/metrics' });
+        const snapshot = await client.getMetricsSnapshot();
+
+        expect(snapshot).toHaveProperty('cache_hit');
+        expect(snapshot).toHaveProperty('cache_miss');
+    });
+});

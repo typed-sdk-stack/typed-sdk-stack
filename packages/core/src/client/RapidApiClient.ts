@@ -60,6 +60,10 @@ export class RapidApiClient {
         return metricsTracker ?? new InMemoryMetricsTracker();
     }
 
+    public async getMetricsSnapshot() {
+        return this.metricsTracker.snapshot();
+    }
+
     protected createPinoLogger({ pinoInstance }: RapidApiClientParams): Logger {
         const logger =
             pinoInstance ??
@@ -258,10 +262,6 @@ export class RapidApiClient {
         }
 
         return request.method === 'get';
-    }
-
-    protected async snapshotMetrics(): Promise<void> {
-        await this.metricsTracker.snapshot();
     }
 
     protected normalizeError(error: unknown, config: AxiosRequestConfig): RapidApiClientError {
