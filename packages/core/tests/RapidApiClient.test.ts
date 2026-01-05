@@ -61,7 +61,6 @@ describe('RapidApiClient', () => {
             expect(response.request.method).toBe('post');
             expect(response.request.baseURL).toBe(params.baseUrl);
             expect(typeof response.headers).toBe('object');
-            expect(response.cacheMetrics).toEqual({ hits: 0, misses: 0 });
         });
 
         it('infers base URL from host when not provided', () => {
@@ -89,7 +88,6 @@ describe('RapidApiClient', () => {
             expect(response.status).toBe(200);
             expect(response.request.method).toBe('get');
             expect(response.request.payload).toBeUndefined();
-            expect(response.cacheMetrics).toEqual({ hits: 0, misses: 1 });
         });
     });
     describe('logging', () => {
@@ -158,7 +156,6 @@ describe('RapidApiClient', () => {
             });
 
             expect(firstResponse.fromCache).toBe(false);
-            expect(firstResponse.cacheMetrics).toEqual({ hits: 0, misses: 1 });
 
             mock.resetHandlers();
             mock.onGet('/cache-me').reply(() => [500, {}]);
@@ -170,7 +167,6 @@ describe('RapidApiClient', () => {
 
             expect(cachedResponse.fromCache).toBe(true);
             expect(cachedResponse.data).toEqual(firstResponse.data);
-            expect(cachedResponse.cacheMetrics).toEqual({ hits: 1, misses: 1 });
         });
 
         it('allows custom cacheKey overrides for non-GET requests', async () => {
@@ -186,7 +182,6 @@ describe('RapidApiClient', () => {
             });
 
             expect(firstResponse.fromCache).toBe(false);
-            expect(firstResponse.cacheMetrics).toEqual({ hits: 0, misses: 1 });
 
             mock.resetHandlers();
             mock.onPost('/cache-post').reply(() => [500, {}]);
@@ -200,7 +195,6 @@ describe('RapidApiClient', () => {
 
             expect(cachedResponse.fromCache).toBe(true);
             expect(cachedResponse.data).toEqual(firstResponse.data);
-            expect(cachedResponse.cacheMetrics).toEqual({ hits: 1, misses: 1 });
         });
 
         it('skips caching when cache is explicitly false', async () => {
@@ -214,7 +208,6 @@ describe('RapidApiClient', () => {
             });
 
             expect(response.fromCache).toBe(false);
-            expect(response.cacheMetrics).toEqual({ hits: 0, misses: 0 });
 
             mock.resetHandlers();
             mock.onGet('/no-cache').reply(() => [500, {}]);
@@ -240,7 +233,6 @@ describe('RapidApiClient', () => {
             });
 
             expect(response.fromCache).toBe(false);
-            expect(response.cacheMetrics).toEqual({ hits: 0, misses: 1 });
 
             mock.resetHandlers();
             mock.onPost('/force-cache').reply(() => [500, {}]);
@@ -253,29 +245,6 @@ describe('RapidApiClient', () => {
             });
 
             expect(cachedResponse.fromCache).toBe(true);
-            expect(cachedResponse.cacheMetrics).toEqual({ hits: 1, misses: 1 });
-        });
-
-        it('tracks cache metrics across multiple cacheable calls', async () => {
-            const { client, mock } = createClientWithMock();
-            mock.onGet('/metrics').reply(200, { ok: true });
-
-            const firstResponse = await client.request({
-                method: 'get',
-                uri: '/metrics',
-            });
-
-            expect(firstResponse.cacheMetrics).toEqual({ hits: 0, misses: 1 });
-
-            mock.resetHandlers();
-            mock.onGet('/metrics').reply(() => [200, { ok: false }]);
-
-            const secondResponse = await client.request({
-                method: 'get',
-                uri: '/metrics',
-            });
-
-            expect(secondResponse.cacheMetrics).toEqual({ hits: 1, misses: 1 });
         });
 
         it('refetches once a cached entry expires via ttl', async () => {

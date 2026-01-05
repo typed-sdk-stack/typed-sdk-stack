@@ -1,6 +1,7 @@
 import type Keyv from '@keyvhq/core';
 import type { AxiosInstance } from 'axios';
 import type { Logger } from 'pino';
+import type { CacheManager } from './cache/CacheManager';
 import type { MetricsTracker } from './metrics/interfaces/MetricsTrackerInterface';
 
 export const isAxiosInstance = (value: unknown): value is AxiosInstance => {
@@ -46,6 +47,12 @@ export const isKeyvCache = (value: unknown): value is Keyv => {
         typeof candidate.clear === 'function'
     );
 };
+
+export const isCacheManagerInstance = (value: unknown): value is CacheManager =>
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as CacheManager).createCacheKey === 'function' &&
+    'cache' in (value as CacheManager);
 
 export const isMetricsTracker = (value: unknown): value is MetricsTracker => {
     if (!value || typeof value !== 'object') {
