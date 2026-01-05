@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'bun:test';
+import { Writable } from 'node:stream';
 import axios from 'axios';
 import AxiosMockAdapter from 'axios-mock-adapter';
 import type { Logger } from 'pino';
+import pino from 'pino';
 import { RapidApiClient } from '../src';
 import { createLoggerStub } from './helpers/createLoggerStub';
 
@@ -59,6 +61,7 @@ describe('RapidApiClient', () => {
             expect(response.request.method).toBe('post');
             expect(response.request.baseURL).toBe(params.baseUrl);
             expect(typeof response.headers).toBe('object');
+            expect(response.cacheMetrics).toEqual({ hits: 0, misses: 0 });
         });
 
         it('infers base URL from host when not provided', () => {
@@ -86,6 +89,7 @@ describe('RapidApiClient', () => {
             expect(response.status).toBe(200);
             expect(response.request.method).toBe('get');
             expect(response.request.payload).toBeUndefined();
+            expect(response.cacheMetrics).toEqual({ hits: 0, misses: 1 });
         });
     });
     describe('logging', () => {
@@ -118,6 +122,30 @@ describe('RapidApiClient', () => {
 
             expect(warnSpy.mock.calls.length).toBe(1);
         });
+
+        it('redacts rapidApiKey in logs even with custom logger', async () => {
+            const logs: string[] = [];
+            const stream = new Writable({
+                write(chunk, _encoding, callback) {
+                    logs.push(chunk.toString());
+                    callback();
+                },
+            });
+            const externalLogger = pino({ level: 'debug' }, stream);
+            const { client, mock } = createClientWithMock({ logger: externalLogger });
+
+            mock.onGet('/log-redaction').reply(200, { ok: true });
+            await client.request({
+                method: 'get',
+                uri: '/log-redaction',
+            });
+
+            const internalLogger = (client as unknown as { logger: Logger }).logger;
+            internalLogger.debug({ rapidApiKey: 'super-secret-key' }, 'redaction-test');
+
+            expect(logs.some((line) => line.includes('super-secret-key'))).toBe(false);
+            expect(logs.some((line) => line.includes('[REDACTED]'))).toBe(true);
+        });
     });
     describe('caching', () => {
         it('returns cached responses for repeated GET requests', async () => {
@@ -130,6 +158,7 @@ describe('RapidApiClient', () => {
             });
 
             expect(firstResponse.fromCache).toBe(false);
+            expect(firstResponse.cacheMetrics).toEqual({ hits: 0, misses: 1 });
 
             mock.resetHandlers();
             mock.onGet('/cache-me').reply(() => [500, {}]);
@@ -141,6 +170,7 @@ describe('RapidApiClient', () => {
 
             expect(cachedResponse.fromCache).toBe(true);
             expect(cachedResponse.data).toEqual(firstResponse.data);
+            expect(cachedResponse.cacheMetrics).toEqual({ hits: 1, misses: 1 });
         });
 
         it('allows custom cacheKey overrides for non-GET requests', async () => {
@@ -156,6 +186,7 @@ describe('RapidApiClient', () => {
             });
 
             expect(firstResponse.fromCache).toBe(false);
+            expect(firstResponse.cacheMetrics).toEqual({ hits: 0, misses: 1 });
 
             mock.resetHandlers();
             mock.onPost('/cache-post').reply(() => [500, {}]);
@@ -169,6 +200,7 @@ describe('RapidApiClient', () => {
 
             expect(cachedResponse.fromCache).toBe(true);
             expect(cachedResponse.data).toEqual(firstResponse.data);
+            expect(cachedResponse.cacheMetrics).toEqual({ hits: 1, misses: 1 });
         });
 
         it('skips caching when cache is explicitly false', async () => {
@@ -182,6 +214,7 @@ describe('RapidApiClient', () => {
             });
 
             expect(response.fromCache).toBe(false);
+            expect(response.cacheMetrics).toEqual({ hits: 0, misses: 0 });
 
             mock.resetHandlers();
             mock.onGet('/no-cache').reply(() => [500, {}]);
@@ -207,6 +240,7 @@ describe('RapidApiClient', () => {
             });
 
             expect(response.fromCache).toBe(false);
+            expect(response.cacheMetrics).toEqual({ hits: 0, misses: 1 });
 
             mock.resetHandlers();
             mock.onPost('/force-cache').reply(() => [500, {}]);
@@ -219,6 +253,59 @@ describe('RapidApiClient', () => {
             });
 
             expect(cachedResponse.fromCache).toBe(true);
+            expect(cachedResponse.cacheMetrics).toEqual({ hits: 1, misses: 1 });
+        });
+
+        it('tracks cache metrics across multiple cacheable calls', async () => {
+            const { client, mock } = createClientWithMock();
+            mock.onGet('/metrics').reply(200, { ok: true });
+
+            const firstResponse = await client.request({
+                method: 'get',
+                uri: '/metrics',
+            });
+
+            expect(firstResponse.cacheMetrics).toEqual({ hits: 0, misses: 1 });
+
+            mock.resetHandlers();
+            mock.onGet('/metrics').reply(() => [200, { ok: false }]);
+
+            const secondResponse = await client.request({
+                method: 'get',
+                uri: '/metrics',
+            });
+
+            expect(secondResponse.cacheMetrics).toEqual({ hits: 1, misses: 1 });
+        });
+
+        it('refetches once a cached entry expires via ttl', async () => {
+            const { client, mock } = createClientWithMock();
+            mock.onGet('/ttl').replyOnce(200, { value: 1 }).onGet('/ttl').reply(200, { value: 2 });
+
+            const ttlMs = 25;
+            const firstResponse = await client.request({
+                method: 'get',
+                uri: '/ttl',
+                cache: true,
+                ttl: ttlMs,
+            });
+
+            expect(firstResponse.fromCache).toBe(false);
+            expect(firstResponse.data).toEqual({ value: 1 });
+
+            await new Promise((resolve) => {
+                setTimeout(resolve, ttlMs + 25);
+            });
+
+            const afterExpiry = await client.request({
+                method: 'get',
+                uri: '/ttl',
+                cache: true,
+                ttl: ttlMs,
+            });
+
+            expect(afterExpiry.fromCache).toBe(false);
+            expect(afterExpiry.data).toEqual({ value: 2 });
         });
     });
 });

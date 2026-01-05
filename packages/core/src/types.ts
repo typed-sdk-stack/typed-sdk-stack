@@ -6,6 +6,11 @@ export type RequestParams = z.infer<typeof RequestParamsSchema>;
 export type RapidApiClientParams = z.infer<typeof RapidApiClientParamsSchema>;
 export type CacheManagerParams = z.infer<typeof CacheManagerParamsSchema>;
 
+export type CacheMetrics = {
+    hits: number;
+    misses: number;
+};
+
 export type RapidApiResponse<Response = unknown> = {
     status: number;
     data: Response;
@@ -13,6 +18,7 @@ export type RapidApiResponse<Response = unknown> = {
     durationMs: number;
     request: RapidApiRequestMetadata;
     fromCache: boolean;
+    cacheMetrics: CacheMetrics;
 };
 
 export type RapidApiRequestMetadata = RequestParams & {
@@ -28,4 +34,5 @@ export type RapidApiResponseBuilderInput<Response> = {
     durationMs: number;
     request: RapidApiRequestMetadata;
     fromCache?: boolean;
+    cacheMetrics: CacheMetrics;
 };

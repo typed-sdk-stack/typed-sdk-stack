@@ -29,8 +29,9 @@ A first-class RapidAPI HTTP client that:
 * Supports per-request or per-client keys
 * Uses Axios under the hood so behavior is consistent across Node, Bun, and edge runtimes
 * Optional Pino-based logging (pass `pinoInstance` to surface request lifecycle logs)
-* Returns a serializable response DTO (status/data/headers/duration/request metadata + `fromCache`) that SDKs can override by subclassing `buildResponseDto`
+* Returns a serializable response DTO (status/data/headers/duration/request metadata + `fromCache` + `cacheMetrics`) that SDKs can override by subclassing `buildResponseDto`
 * Ships with a `CacheManager` helper so SDKs can inject custom Keyv stores or reuse the default namespaced cache
+* Supports pluggable metrics trackers (defaults to in-memory) so cache/request metrics can be forwarded to any observability system
 * Normalizes RapidAPI request/response behavior
 
 All vendor SDKs build on this client.
@@ -72,7 +73,7 @@ Explicit caching utilities designed for RapidAPI usage:
 * TTL configuration per endpoint (per-request via `ttl`)
 * Deterministic cache key helpers (`CacheManager.createCacheKey()` combines method/url/params/payload/metadata)
 * Extensible `CacheManager` that can be constructed with your own `Keyv` instance (Redis, SQLite, etc.) or reused from `RapidApiClient`
-* Opt-in request-level caching controls (`cacheKey` override + `ttl`) and default GET caching with cache-hit/miss logging; responses include `fromCache`
+* Opt-in request-level caching controls (`cacheKey` override + `ttl`) and default GET caching with cache-hit/miss logging; responses include `fromCache` plus running `cacheMetrics` (`{ hits, misses }`)
 
 Caching request options:
 
@@ -81,6 +82,35 @@ Caching request options:
 * `ttl` — provide a per-request TTL (milliseconds) passed to Keyv; falls back to the store default.
 
 Caching is opt-in and transparent.
+
+#### Example: Bring-your-own cache + TTL overrides
+
+```ts
+import Keyv from '@keyvhq/redis';
+import { RapidApiClient } from '@typed-sdk-stack/core';
+
+const redisCache = new Keyv('redis://localhost:6379', {
+    namespace: 'weather-prod',
+    ttl: 60_000, // default TTL for any entry without a per-request override
+});
+
+const client = new RapidApiClient({
+    rapidApiKey: process.env.RAPID_API_KEY!,
+    rapidApiHost: 'weatherapi-com.p.rapidapi.com',
+    keyvInstance: redisCache,
+});
+
+await client.request({
+    method: 'get',
+    uri: '/current.json',
+    params: { q: '53.1,-0.13' },
+    cache: true,
+    ttl: 5_000, // overrides the store default just for this call
+});
+```
+
+Per-request `ttl` always wins; when it is omitted the underlying Keyv instance controls expiry (e.g., Redis TTL). Custom
+stores can be anything Keyv supports (Redis, SQLite, in-memory) so SDKs can reuse existing infrastructure.
 
 ---
 
@@ -160,6 +190,32 @@ Hook points for:
 * Error rates
 
 Hooks are framework-agnostic and optional.
+
+#### Example: Structured logging with Pino
+
+```ts
+import pino from 'pino';
+import { RapidApiClient } from '@typed-sdk-stack/core';
+
+const logger = pino({ level: 'debug' });
+
+const client = new RapidApiClient({
+    rapidApiKey: process.env.RAPID_API_KEY!,
+    rapidApiHost: 'weatherapi-com.p.rapidapi.com',
+    pinoInstance: logger,
+});
+
+await client.request({
+    method: 'get',
+    uri: '/current.json',
+    params: { q: '53.1,-0.13' },
+});
+```
+
+The client emits structured events (`rapidapi.request.start`, `rapidapi.request.success`, `rapidapi.request.failure`,
+`rapidapi.cache.hit`, `rapidapi.cache.miss`, `rapidapi.cache.store`) with metadata such as method, uri, params, duration,
+and cache keys. Secrets (e.g., `rapidApiKey`) are automatically redacted, so adjusting log verbosity is as simple as
+changing the provided Pino instance’s level.
 
 ---
 

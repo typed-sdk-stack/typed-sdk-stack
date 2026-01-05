@@ -11,15 +11,11 @@
 ## Client Enhancements for SDKs
 - As needs arise, extend `RapidApiClient` with helper methods (default params, request transforms, caching knobs) instead of creating a separate base class.
 
-## Caching (follow-up)
-- Add an integration/unit test that proves per-request `ttl` values expire cached entries and fetch fresh data.
-- Document a short example in `packages/core/README.md` showing how to inject a custom Keyv instance (e.g., Redis) and how per-request TTL overrides interact with the store-level TTL.
-- Expose cache metrics (hit/miss counts) through the response or client so SDKs can make decisions without parsing logs.
+## Caching (follow-up) ✅
+- Completed: TTL regression tests (unit + integration), README example for custom Keyv + per-request TTL, and `cacheMetrics` exposure on responses.
 
-## Logging (follow-up)
-- Provide README documentation that demonstrates passing a custom `pinoInstance`, overriding levels, and what the default structured messages look like.
-- Ensure secrets such as `rapidApiKey` are consistently redacted even if future metadata changes; add a regression test that inspects emitted log payloads.
-- Expose a lightweight extension point (e.g., callback or hook) so SDKs can append extra metadata to each log entry without duplicating the client.
+## Logging (follow-up) ✅
+- Completed: README logging examples, redaction regression test, and decision that no extra metadata hook is required today (existing log fields are sufficient; revisit if SDKs request it).
 
 ## Rate Limit Awareness & Throttling
 - Track RapidAPI rate headers, expose them through the client/base class, and implement soft throttling helpers.

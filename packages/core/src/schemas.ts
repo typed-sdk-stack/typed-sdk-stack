@@ -3,7 +3,8 @@ import type { AxiosInstance } from 'axios';
 import type { Logger } from 'pino';
 import { z } from 'zod';
 import type { CacheManager } from './cache/CacheManager';
-import { isAxiosInstance, isKeyvCache, isPinoLogger } from './utils';
+import type { MetricsTracker } from './metrics/interfaces/MetricsTrackerInterface';
+import { isAxiosInstance, isKeyvCache, isMetricsTracker, isPinoLogger } from './utils';
 
 const isCacheManagerInstance = (value: unknown): value is CacheManager =>
     value !== null &&
@@ -33,6 +34,11 @@ export const RapidApiClientParamsSchema = z.object({
     cacheManager: z
         .custom<CacheManager>(isCacheManagerInstance, {
             message: 'A valid CacheManager instance is required.',
+        })
+        .optional(),
+    metricsTracker: z
+        .custom<MetricsTracker>(isMetricsTracker, {
+            message: 'A valid MetricsTracker instance is required.',
         })
         .optional(),
 });
