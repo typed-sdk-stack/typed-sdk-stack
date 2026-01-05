@@ -14,10 +14,8 @@
 ## Caching (follow-up) ✅
 - Completed: TTL regression tests (unit + integration), README example for custom Keyv + per-request TTL, and `cacheMetrics` exposure on responses.
 
-## Logging (follow-up)
-- Provide README documentation that demonstrates passing a custom `pinoInstance`, overriding levels, and what the default structured messages look like. ✅
-- Ensure secrets such as `rapidApiKey` are consistently redacted even if future metadata changes; add a regression test that inspects emitted log payloads. ✅
-- Expose a lightweight extension point (e.g., callback or hook) so SDKs can append extra metadata to each log entry without duplicating the client.
+## Logging (follow-up) ✅
+- Completed: README logging examples, redaction regression test, and decision that no extra metadata hook is required today (existing log fields are sufficient; revisit if SDKs request it).
 
 ## Rate Limit Awareness & Throttling
 - Track RapidAPI rate headers, expose them through the client/base class, and implement soft throttling helpers.
