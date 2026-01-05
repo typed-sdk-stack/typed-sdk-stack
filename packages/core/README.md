@@ -91,6 +91,7 @@ RapidAPI-aware rate handling:
 * Soft throttling helpers
 * Retry-after respect (when present)
 * Provider-specific limits handled in vendor SDKs
+* Dedicated `RateLimitTracker` helper (Keyv-backed) that stores the latest RapidAPI headers and surfaces them through response metadata/hooks
 
 The core never attempts to bypass RapidAPI limits.
 
