@@ -12,6 +12,7 @@ import type {
     RapidApiRequestMetadata,
     RapidApiResponse,
     RapidApiResponseBuilderInput,
+    RateLimit,
     RequestParams,
 } from '../types';
 
@@ -94,6 +95,43 @@ export class RapidApiClient {
         instance.defaults.headers.common['Content-Type'] = 'application/json';
 
         return instance;
+    }
+
+    protected extractRateLimit(headers: Record<string, unknown>): RateLimit {
+        const normalized = Object.keys(headers).reduce<Record<string, unknown>>((acc, key) => {
+            acc[key.toLowerCase()] = headers[key];
+            return acc;
+        }, {});
+
+        const pickValue = (...keys: string[]): unknown => {
+            for (const key of keys) {
+                const value = normalized[key.toLowerCase()];
+                if (value !== undefined && value !== null) {
+                    return value;
+                }
+            }
+            return undefined;
+        };
+
+        const dateSource = pickValue('date', 'x-rapidapi-request-date');
+        const dateObj = dateSource ? new Date(String(dateSource)) : new Date();
+
+        const toNumber = (...keys: string[]): number => {
+            const value = pickValue(...keys);
+            if (value === undefined || value === null) {
+                return 0;
+            }
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : 0;
+        };
+
+        return {
+            id: String(pickValue('x-rapidapi-request-id') ?? ''),
+            date: dateObj.getTime(),
+            remaining: toNumber('x-ratelimit-requests-remaining', 'x-rapidapi-request-remaining'),
+            reset: toNumber('x-ratelimit-requests-reset', 'x-rapidapi-request-reset'),
+            limit: toNumber('x-ratelimit-requests-limit', 'x-rapidapi-request-limit'),
+        };
     }
 
     async request<Response = unknown>(requestParams: RequestParams): Promise<RapidApiResponse<Response>> {
@@ -204,6 +242,7 @@ export class RapidApiClient {
             durationMs,
             request,
             fromCache: fromCache ?? false,
+            rateLimit: this.extractRateLimit(headers),
         };
     }
 

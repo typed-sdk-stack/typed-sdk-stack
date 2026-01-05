@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import type {
     CacheManagerParamsSchema,
     RapidApiClientParamsSchema,
+    RateLimitSchema,
     RequestParamsSchema,
 } from './schemas';
 
@@ -17,6 +18,7 @@ export type RapidApiResponse<Response = unknown> = {
     durationMs: number;
     request: RapidApiRequestMetadata;
     fromCache: boolean;
+    rateLimit: RateLimit;
 };
 
 export type RapidApiRequestMetadata = RequestParams & {
@@ -33,3 +35,5 @@ export type RapidApiResponseBuilderInput<Response> = {
     request: RapidApiRequestMetadata;
     fromCache?: boolean;
 };
+
+export type RateLimit = z.infer<typeof RateLimitSchema>;

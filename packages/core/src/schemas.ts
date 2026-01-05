@@ -54,3 +54,11 @@ export const CacheManagerParamsSchema = z.object({
         })
         .optional(),
 });
+
+export const RateLimitSchema = z.object({
+    id: z.string(),
+    date: z.number(),
+    remaining: z.number(),
+    reset: z.number(),
+    limit: z.number(),
+});

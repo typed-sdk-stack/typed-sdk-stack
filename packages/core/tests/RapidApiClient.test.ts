@@ -26,6 +26,12 @@ const createClientWithMock = (overrides: Partial<typeof params> & { logger?: Log
     return { client, axiosInstance, mock };
 };
 
+class RateLimitTestClient extends RapidApiClient {
+    public parseRateLimit(headers: Record<string, unknown>) {
+        return this.extractRateLimit(headers);
+    }
+}
+
 describe('RapidApiClient', () => {
     describe('core', () => {
         it('is constructible', () => {
@@ -44,7 +50,16 @@ describe('RapidApiClient', () => {
 
         it('builds a serializable response DTO', async () => {
             const { client, mock } = createClientWithMock();
-            mock.onPost('/weather').reply(200, { ok: true });
+            mock.onPost('/weather').reply(() => [
+                200,
+                { ok: true },
+                {
+                    'x-rapidapi-request-id': 'req-123',
+                    'x-ratelimit-requests-remaining': '298',
+                    'x-ratelimit-requests-reset': '1712345678',
+                    'x-ratelimit-requests-limit': '300',
+                },
+            ]);
 
             const response = await client.request({
                 method: 'post',
@@ -61,6 +76,13 @@ describe('RapidApiClient', () => {
             expect(response.request.method).toBe('post');
             expect(response.request.baseURL).toBe(params.baseUrl);
             expect(typeof response.headers).toBe('object');
+            expect(response.rateLimit).toEqual({
+                id: 'req-123',
+                date: expect.any(Number),
+                remaining: 298,
+                reset: 1712345678,
+                limit: 300,
+            });
         });
 
         it('infers base URL from host when not provided', () => {
@@ -276,5 +298,23 @@ describe('RapidApiClient', () => {
             expect(afterExpiry.fromCache).toBe(false);
             expect(afterExpiry.data).toEqual({ value: 2 });
         });
+    });
+});
+describe('rate limits', () => {
+    it('parses headers case-insensitively and falls back to defaults', () => {
+        const client = new RateLimitTestClient(params);
+        const result = client.parseRateLimit({
+            'X-RapidAPI-Request-Id': 'Req-XYZ',
+            Date: 'Mon, 05 Jan 2026 01:02:03 GMT',
+            'X-Ratelimit-Requests-Remaining': '150',
+            'x-rapidapi-request-reset': '555',
+            'X-Ratelimit-Requests-Limit': '500',
+        });
+
+        expect(result.id).toBe('Req-XYZ');
+        expect(result.date).toBeGreaterThan(0);
+        expect(result.remaining).toBe(150);
+        expect(result.reset).toBe(555);
+        expect(result.limit).toBe(500);
     });
 });

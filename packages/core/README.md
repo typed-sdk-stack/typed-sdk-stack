@@ -29,7 +29,7 @@ A first-class RapidAPI HTTP client that:
 * Supports per-request or per-client keys
 * Uses Axios under the hood so behavior is consistent across Node, Bun, and edge runtimes
 * Optional Pino-based logging (pass `pinoInstance` to surface request lifecycle logs)
-* Returns a serializable response DTO (status/data/headers/duration/request metadata + `fromCache`) that SDKs can override by subclassing `buildResponseDto`
+* Returns a serializable response DTO (status/data/headers/duration/request metadata + `fromCache` + parsed RapidAPI rate-limit headers) that SDKs can override by subclassing `buildResponseDto`
 * Ships with a `CacheManager` helper so SDKs can inject custom Keyv stores or reuse the default namespaced cache
 * Supports pluggable metrics trackers (defaults to in-memory) so cache/request metrics can be forwarded to any observability system
 * Normalizes RapidAPI request/response behavior
