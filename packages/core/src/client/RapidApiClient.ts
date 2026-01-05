@@ -4,8 +4,12 @@ import objectHash from 'object-hash';
 import { type Logger, pino } from 'pino';
 import { CacheManager } from '../cache/CacheManager';
 import { RapidApiClientError } from '../error/RapidApiClientError';
+import { CacheMetrics as CacheMetricKeys } from '../metrics/interfaces/CacheMetricsTrackerInterface';
+import type { MetricsTracker } from '../metrics/interfaces/MetricsTrackerInterface';
+import { InMemoryMetricsTracker } from '../metrics/stores/InMemoryMetricsTracker';
 import { RapidApiClientParamsSchema, RequestParamsSchema } from '../schemas';
 import type {
+    CacheMetrics,
     RapidApiClientParams,
     RapidApiRequestMetadata,
     RapidApiResponse,
@@ -17,6 +21,7 @@ export class RapidApiClient {
     protected httpClient: AxiosInstance;
     protected logger: Logger;
     protected cacheManager: CacheManager;
+    protected metricsTracker: MetricsTracker;
     protected rapidApiHost: string;
     protected rapidApiKey: string;
 
@@ -25,6 +30,7 @@ export class RapidApiClient {
         this.httpClient = this.createHttpClient(httpClientParams);
         this.logger = this.createPinoLogger(httpClientParams);
         this.cacheManager = this.createCacheManager(httpClientParams);
+        this.metricsTracker = this.createMetricsTracker(httpClientParams);
 
         const { rapidApiHost, rapidApiKey } = httpClientParams;
         this.rapidApiHost = rapidApiHost;
@@ -49,6 +55,10 @@ export class RapidApiClient {
             });
 
         return new CacheManager({ keyvInstance: store });
+    }
+
+    protected createMetricsTracker({ metricsTracker }: RapidApiClientParams): MetricsTracker {
+        return metricsTracker ?? new InMemoryMetricsTracker();
     }
 
     protected createPinoLogger({ pinoInstance }: RapidApiClientParams): Logger {
@@ -105,10 +115,13 @@ export class RapidApiClient {
         if (cacheKey && shouldCacheRequest) {
             const cachedResponse = await this.cacheManager.get<RapidApiResponse<Response>>(cacheKey);
             if (cachedResponse) {
+                await this.metricsTracker.recordCacheHit();
                 this.logger.debug({ ...requestMetadata, cacheKey }, 'rapidapi.cache.hit');
-                return { ...cachedResponse, fromCache: true };
+                const cacheMetrics = await this.getCacheMetrics();
+                return { ...cachedResponse, fromCache: true, cacheMetrics };
             }
 
+            await this.metricsTracker.recordCacheMiss();
             this.logger.debug({ ...requestMetadata, cacheKey }, 'rapidapi.cache.miss');
         } else {
             this.logger.debug({ ...requestMetadata }, 'rapidapi.cache.skip');
@@ -119,11 +132,13 @@ export class RapidApiClient {
         try {
             const response = await this.httpClient.request<Response>(config);
             const durationMs = Date.now() - startedAt;
+            const cacheMetrics = await this.getCacheMetrics();
             const dto = this.buildResponseDto<Response>({
                 response,
                 durationMs,
                 request: requestMetadata,
                 fromCache: false,
+                cacheMetrics,
             });
 
             this.logger.debug(
@@ -168,6 +183,7 @@ export class RapidApiClient {
         durationMs,
         request,
         fromCache,
+        cacheMetrics,
     }: RapidApiResponseBuilderInput<Response>): RapidApiResponse<Response> {
         const headers =
             response.headers instanceof AxiosHeaders
@@ -181,6 +197,7 @@ export class RapidApiClient {
             durationMs,
             request,
             fromCache: fromCache ?? false,
+            cacheMetrics,
         };
     }
 
@@ -194,6 +211,14 @@ export class RapidApiClient {
         }
 
         return request.method === 'get';
+    }
+
+    protected async getCacheMetrics(): Promise<CacheMetrics> {
+        const snapshot = await this.metricsTracker.snapshot();
+        return {
+            hits: snapshot[CacheMetricKeys.cacheHit] ?? 0,
+            misses: snapshot[CacheMetricKeys.cacheMiss] ?? 0,
+        };
     }
 
     protected normalizeError(error: unknown, config: AxiosRequestConfig): RapidApiClientError {

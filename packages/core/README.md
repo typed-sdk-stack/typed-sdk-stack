@@ -29,8 +29,9 @@ A first-class RapidAPI HTTP client that:
 * Supports per-request or per-client keys
 * Uses Axios under the hood so behavior is consistent across Node, Bun, and edge runtimes
 * Optional Pino-based logging (pass `pinoInstance` to surface request lifecycle logs)
-* Returns a serializable response DTO (status/data/headers/duration/request metadata + `fromCache`) that SDKs can override by subclassing `buildResponseDto`
+* Returns a serializable response DTO (status/data/headers/duration/request metadata + `fromCache` + `cacheMetrics`) that SDKs can override by subclassing `buildResponseDto`
 * Ships with a `CacheManager` helper so SDKs can inject custom Keyv stores or reuse the default namespaced cache
+* Supports pluggable metrics trackers (defaults to in-memory) so cache/request metrics can be forwarded to any observability system
 * Normalizes RapidAPI request/response behavior
 
 All vendor SDKs build on this client.
@@ -72,7 +73,7 @@ Explicit caching utilities designed for RapidAPI usage:
 * TTL configuration per endpoint (per-request via `ttl`)
 * Deterministic cache key helpers (`CacheManager.createCacheKey()` combines method/url/params/payload/metadata)
 * Extensible `CacheManager` that can be constructed with your own `Keyv` instance (Redis, SQLite, etc.) or reused from `RapidApiClient`
-* Opt-in request-level caching controls (`cacheKey` override + `ttl`) and default GET caching with cache-hit/miss logging; responses include `fromCache`
+* Opt-in request-level caching controls (`cacheKey` override + `ttl`) and default GET caching with cache-hit/miss logging; responses include `fromCache` plus running `cacheMetrics` (`{ hits, misses }`)
 
 Caching request options:
 

@@ -1,6 +1,7 @@
 import type Keyv from '@keyvhq/core';
 import type { AxiosInstance } from 'axios';
 import type { Logger } from 'pino';
+import type { MetricsTracker } from './metrics/interfaces/MetricsTrackerInterface';
 
 export const isAxiosInstance = (value: unknown): value is AxiosInstance => {
     if (!value) {
@@ -43,5 +44,25 @@ export const isKeyvCache = (value: unknown): value is Keyv => {
         typeof candidate.get === 'function' &&
         typeof candidate.delete === 'function' &&
         typeof candidate.clear === 'function'
+    );
+};
+
+export const isMetricsTracker = (value: unknown): value is MetricsTracker => {
+    if (!value || typeof value !== 'object') {
+        return false;
+    }
+
+    const candidate = value as MetricsTracker;
+
+    return (
+        typeof candidate.increment === 'function' &&
+        typeof candidate.decrement === 'function' &&
+        typeof candidate.get === 'function' &&
+        typeof candidate.snapshot === 'function' &&
+        typeof candidate.recordCacheHit === 'function' &&
+        typeof candidate.recordCacheMiss === 'function' &&
+        typeof candidate.recordRequestsTotal === 'function' &&
+        typeof candidate.recordRequestsSucceed === 'function' &&
+        typeof candidate.recordRequestsFailed === 'function'
     );
 };
