@@ -83,6 +83,47 @@ describe.skipIf(!rapidApiKeyEnv || !runIntegration)('RapidApiClient integration'
 
             expect(forcedCacheSecond.fromCache).toBe(true);
         });
+
+        it('refreshes cached responses once ttl expires', async () => {
+            const ttlMs = 1500;
+            const ttlCacheKey = `ttl-cache-${Date.now()}`;
+            const first = await apiClient.request({
+                method: 'get',
+                uri,
+                params,
+                cache: true,
+                ttl: ttlMs,
+                cacheKey: ttlCacheKey,
+            });
+
+            expect(first.fromCache).toBe(false);
+
+            const cached = await apiClient.request({
+                method: 'get',
+                uri,
+                params,
+                cache: true,
+                ttl: ttlMs,
+                cacheKey: ttlCacheKey,
+            });
+
+            expect(cached.fromCache).toBe(true);
+
+            await new Promise((resolve) => {
+                setTimeout(resolve, ttlMs + 250);
+            });
+
+            const afterExpiry = await apiClient.request({
+                method: 'get',
+                uri,
+                params,
+                cache: true,
+                ttl: ttlMs,
+                cacheKey: ttlCacheKey,
+            });
+
+            expect(afterExpiry.fromCache).toBe(false);
+        });
     });
 
     describe('logging', () => {

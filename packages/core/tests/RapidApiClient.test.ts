@@ -220,5 +220,35 @@ describe('RapidApiClient', () => {
 
             expect(cachedResponse.fromCache).toBe(true);
         });
+
+        it('refetches once a cached entry expires via ttl', async () => {
+            const { client, mock } = createClientWithMock();
+            mock.onGet('/ttl').replyOnce(200, { value: 1 }).onGet('/ttl').reply(200, { value: 2 });
+
+            const ttlMs = 25;
+            const firstResponse = await client.request({
+                method: 'get',
+                uri: '/ttl',
+                cache: true,
+                ttl: ttlMs,
+            });
+
+            expect(firstResponse.fromCache).toBe(false);
+            expect(firstResponse.data).toEqual({ value: 1 });
+
+            await new Promise((resolve) => {
+                setTimeout(resolve, ttlMs + 25);
+            });
+
+            const afterExpiry = await client.request({
+                method: 'get',
+                uri: '/ttl',
+                cache: true,
+                ttl: ttlMs,
+            });
+
+            expect(afterExpiry.fromCache).toBe(false);
+            expect(afterExpiry.data).toEqual({ value: 2 });
+        });
     });
 });
