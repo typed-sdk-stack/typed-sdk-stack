@@ -12,8 +12,8 @@ Implement the outstanding work captured under the “Caching (follow-up)” and 
    - Responses now include `cacheMetrics { hits, misses }`, reflecting per-client counters so SDKs can read stats without parsing logs.
 4. **Logging README example** ✅
    - Documented how to supply a `pinoInstance`, tweak levels, and what structured log events the client emits by default.
-5. **Secret redaction test**
-   - Ensure `rapidApiKey` (and future secrets) never appear in logs; add a regression test that inspects emitted payloads.
+5. **Secret redaction test** ✅
+   - Added a regression test (`RapidApiClient > logging > redacts rapidApiKey in logs even with custom logger`) that captures log output and ensures secrets are masked.
 6. **Logging extension hook**
    - Provide a lightweight mechanism (callback or hook) allowing SDKs to inject extra metadata into each log message without forking `RapidApiClient`.
 

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'bun:test';
+import { Writable } from 'node:stream';
 import axios from 'axios';
 import AxiosMockAdapter from 'axios-mock-adapter';
 import type { Logger } from 'pino';
+import pino from 'pino';
 import { RapidApiClient } from '../src';
 import { createLoggerStub } from './helpers/createLoggerStub';
 
@@ -119,6 +121,30 @@ describe('RapidApiClient', () => {
             ).rejects.toThrow();
 
             expect(warnSpy.mock.calls.length).toBe(1);
+        });
+
+        it('redacts rapidApiKey in logs even with custom logger', async () => {
+            const logs: string[] = [];
+            const stream = new Writable({
+                write(chunk, _encoding, callback) {
+                    logs.push(chunk.toString());
+                    callback();
+                },
+            });
+            const externalLogger = pino({ level: 'debug' }, stream);
+            const { client, mock } = createClientWithMock({ logger: externalLogger });
+
+            mock.onGet('/log-redaction').reply(200, { ok: true });
+            await client.request({
+                method: 'get',
+                uri: '/log-redaction',
+            });
+
+            const internalLogger = (client as unknown as { logger: Logger }).logger;
+            internalLogger.debug({ rapidApiKey: 'super-secret-key' }, 'redaction-test');
+
+            expect(logs.some((line) => line.includes('super-secret-key'))).toBe(false);
+            expect(logs.some((line) => line.includes('[REDACTED]'))).toBe(true);
         });
     });
     describe('caching', () => {

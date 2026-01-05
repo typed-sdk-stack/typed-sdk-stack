@@ -16,7 +16,7 @@
 
 ## Logging (follow-up)
 - Provide README documentation that demonstrates passing a custom `pinoInstance`, overriding levels, and what the default structured messages look like. ✅
-- Ensure secrets such as `rapidApiKey` are consistently redacted even if future metadata changes; add a regression test that inspects emitted log payloads.
+- Ensure secrets such as `rapidApiKey` are consistently redacted even if future metadata changes; add a regression test that inspects emitted log payloads. ✅
 - Expose a lightweight extension point (e.g., callback or hook) so SDKs can append extra metadata to each log entry without duplicating the client.
 
 ## Rate Limit Awareness & Throttling

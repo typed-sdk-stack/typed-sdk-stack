@@ -62,11 +62,24 @@ export class RapidApiClient {
     }
 
     protected createPinoLogger({ pinoInstance }: RapidApiClientParams): Logger {
-        return (
+        const logger =
             pinoInstance ??
             pino({
                 level: 'silent',
-            })
+                redact: {
+                    paths: ['rapidApiKey', '*.rapidApiKey'],
+                    censor: '[REDACTED]',
+                },
+            });
+
+        return logger.child(
+            {},
+            {
+                redact: {
+                    paths: ['rapidApiKey', '*.rapidApiKey'],
+                    censor: '[REDACTED]',
+                },
+            }
         );
     }
 
