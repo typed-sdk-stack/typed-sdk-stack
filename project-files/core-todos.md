@@ -12,7 +12,7 @@
 - As needs arise, extend `RapidApiClient` with helper methods (default params, request transforms, caching knobs) instead of creating a separate base class.
 
 ## Caching (follow-up) ✅
-- Completed: TTL regression tests (unit + integration), README example for custom Keyv + per-request TTL, and `cacheMetrics` exposure on responses.
+- Completed: TTL regression tests (unit + integration) and README example for custom Keyv + per-request TTL.
 
 ## Logging (follow-up) ✅
 - Completed: README logging examples, redaction regression test, and decision that no extra metadata hook is required today (existing log fields are sufficient; revisit if SDKs request it).

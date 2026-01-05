@@ -32,6 +32,10 @@ describe.skipIf(!rapidApiKeyEnv || !runIntegration)('RapidApiClient integration'
             expect(response.request.uri).toBe(uri);
             expect(typeof response.data).toBe('object');
             expect(typeof response.headers).toBe('object');
+            expect(response.rateLimit).toMatchObject({
+                limit: expect.any(Number),
+                remaining: expect.any(Number),
+            });
         });
     });
 

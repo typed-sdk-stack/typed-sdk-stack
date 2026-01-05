@@ -4,16 +4,15 @@ import objectHash from 'object-hash';
 import { type Logger, pino } from 'pino';
 import { CacheManager } from '../cache/CacheManager';
 import { RapidApiClientError } from '../error/RapidApiClientError';
-import { CacheMetricKeys } from '../metrics/interfaces/CacheMetricsTrackerInterface';
 import type { MetricsTracker } from '../metrics/interfaces/MetricsTrackerInterface';
 import { InMemoryMetricsTracker } from '../metrics/stores/InMemoryMetricsTracker';
 import { RapidApiClientParamsSchema, RequestParamsSchema } from '../schemas';
 import type {
-    CacheMetrics,
     RapidApiClientParams,
     RapidApiRequestMetadata,
     RapidApiResponse,
     RapidApiResponseBuilderInput,
+    RateLimit,
     RequestParams,
 } from '../types';
 
@@ -61,6 +60,10 @@ export class RapidApiClient {
         return metricsTracker ?? new InMemoryMetricsTracker();
     }
 
+    public async getMetricsSnapshot() {
+        return this.metricsTracker.snapshot();
+    }
+
     protected createPinoLogger({ pinoInstance }: RapidApiClientParams): Logger {
         const logger =
             pinoInstance ??
@@ -98,6 +101,45 @@ export class RapidApiClient {
         return instance;
     }
 
+    protected extractRateLimit(headers: Record<string, unknown>): RateLimit {
+        const normalized = Object.keys(headers).reduce<Record<string, unknown>>((acc, key) => {
+            acc[key.toLowerCase()] = headers[key];
+            return acc;
+        }, {});
+
+        const pickValue = (...keys: string[]): unknown => {
+            for (const key of keys) {
+                const value = normalized[key.toLowerCase()];
+                if (value !== undefined && value !== null) {
+                    return value;
+                }
+            }
+            return undefined;
+        };
+
+        const dateSource = pickValue('date', 'x-rapidapi-request-date');
+        const dateObj = dateSource ? new Date(String(dateSource)) : new Date();
+
+        const toNumber = (...keys: string[]): number => {
+            const value = pickValue(...keys);
+            if (value === undefined || value === null) {
+                return 0;
+            }
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : 0;
+        };
+
+        const timestamp = dateObj.getTime();
+
+        return {
+            id: String(pickValue('x-rapidapi-request-id') ?? ''),
+            date: Number.isFinite(timestamp) ? timestamp : Date.now(),
+            remaining: toNumber('x-ratelimit-requests-remaining', 'x-rapidapi-request-remaining'),
+            reset: toNumber('x-ratelimit-requests-reset', 'x-rapidapi-request-reset'),
+            limit: toNumber('x-ratelimit-requests-limit', 'x-rapidapi-request-limit'),
+        };
+    }
+
     async request<Response = unknown>(requestParams: RequestParams): Promise<RapidApiResponse<Response>> {
         const parsedRequest = RequestParamsSchema.parse(requestParams);
         const { method, uri, params, payload } = parsedRequest;
@@ -130,8 +172,7 @@ export class RapidApiClient {
             if (cachedResponse) {
                 await this.metricsTracker.recordCacheHit();
                 this.logger.debug({ ...requestMetadata, cacheKey }, 'rapidapi.cache.hit');
-                const cacheMetrics = await this.getCacheMetrics();
-                return { ...cachedResponse, fromCache: true, cacheMetrics };
+                return { ...cachedResponse, fromCache: true };
             }
 
             await this.metricsTracker.recordCacheMiss();
@@ -145,13 +186,11 @@ export class RapidApiClient {
         try {
             const response = await this.httpClient.request<Response>(config);
             const durationMs = Date.now() - startedAt;
-            const cacheMetrics = await this.getCacheMetrics();
             const dto = this.buildResponseDto<Response>({
                 response,
                 durationMs,
                 request: requestMetadata,
                 fromCache: false,
-                cacheMetrics,
             });
 
             this.logger.debug(
@@ -196,7 +235,6 @@ export class RapidApiClient {
         durationMs,
         request,
         fromCache,
-        cacheMetrics,
     }: RapidApiResponseBuilderInput<Response>): RapidApiResponse<Response> {
         const headers =
             response.headers instanceof AxiosHeaders
@@ -210,7 +248,7 @@ export class RapidApiClient {
             durationMs,
             request,
             fromCache: fromCache ?? false,
-            cacheMetrics,
+            rateLimit: this.extractRateLimit(headers),
         };
     }
 
@@ -224,14 +262,6 @@ export class RapidApiClient {
         }
 
         return request.method === 'get';
-    }
-
-    protected async getCacheMetrics(): Promise<CacheMetrics> {
-        const snapshot = await this.metricsTracker.snapshot();
-        return {
-            hits: snapshot[CacheMetricKeys.cacheHit] ?? 0,
-            misses: snapshot[CacheMetricKeys.cacheMiss] ?? 0,
-        };
     }
 
     protected normalizeError(error: unknown, config: AxiosRequestConfig): RapidApiClientError {

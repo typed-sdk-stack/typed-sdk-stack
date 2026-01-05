@@ -4,13 +4,7 @@ import type { Logger } from 'pino';
 import { z } from 'zod';
 import type { CacheManager } from './cache/CacheManager';
 import type { MetricsTracker } from './metrics/interfaces/MetricsTrackerInterface';
-import { isAxiosInstance, isKeyvCache, isMetricsTracker, isPinoLogger } from './utils';
-
-const isCacheManagerInstance = (value: unknown): value is CacheManager =>
-    value !== null &&
-    typeof value === 'object' &&
-    typeof (value as CacheManager).createCacheKey === 'function' &&
-    'cache' in (value as CacheManager);
+import { isAxiosInstance, isCacheManagerInstance, isKeyvCache, isMetricsTracker, isPinoLogger } from './utils';
 
 export const RapidApiClientParamsSchema = z.object({
     rapidApiKey: z.string().min(1, 'RapidAPI key is required.'),
@@ -59,4 +53,12 @@ export const CacheManagerParamsSchema = z.object({
             message: 'A valid Keyv instance is required.',
         })
         .optional(),
+});
+
+export const RateLimitSchema = z.object({
+    id: z.string(),
+    date: z.number(),
+    remaining: z.number(),
+    reset: z.number(),
+    limit: z.number(),
 });
